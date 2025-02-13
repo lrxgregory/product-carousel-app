@@ -1,0 +1,217 @@
+{% comment %}
+  App Block: Product Carousel
+  Compatibility: Online Store 2.0
+{% endcomment %}
+
+{{ 'product-carousel.css' | asset_url | stylesheet_tag }}
+
+<div
+  class="flex flex-col-reverse md:flex-row w-full px-8 md:px-24 items-center opacity-0 transition-opacity duration-700 ease-out"
+  id="carousel-container-{{ block.id }}"
+>
+  <!-- Dynamic text -->
+  <div
+    class="w-full md:w-1/2 space-y-5 md:text-left opacity-0 translate-y-8 transition-all duration-700 ease-out delay-300"
+    id="text-container-{{ block.id }}"
+  >
+    <h1
+      id="product-title-{{ block.id }}"
+      class="text-6xl font-bold uppercase pb-16 opacity-0 translate-y-8 transition-all duration-500 ease-out delay-500"
+    >
+      <span id="title-1-{{ block.id }}" class="block"></span>
+      <span id="title-2-{{ block.id }}" class="block"></span>
+      <span id="title-3-{{ block.id }}" class="block"></span>
+    </h1>
+
+    <h2
+      id="product-description-{{ block.id }}"
+      class="!text-3xl py-4 opacity-0 translate-y-8 transition-all duration-500 ease-out delay-700"
+    ></h2>
+
+    {% if block.settings.button_text != blank %}
+      <div
+        class="flex font-bold uppercase items-center gap-2 !text-3xl opacity-0 translate-y-8 transition-all duration-500 ease-out delay-900"
+        id="button-container-{{ block.id }}"
+      >
+        <a id="product-button-{{ block.id }}" href="" class="flex items-center gap-2">
+          {{ block.settings.button_text }}
+          <button class="border rounded-3xl px-4 flex items-center justify-center transition-transform hover:translate-x-2 duration-300">
+            <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Product carousel -->
+  <div
+    class="w-full md:w-1/2 relative opacity-0 scale-95 transition-all duration-700 ease-out"
+    id="carousel-wrapper-{{ block.id }}"
+  >
+    {% if block.settings.products != blank %}
+      <div class="relative">
+        <div id="product-carousel-{{ block.id }}">
+          {% for product in block.settings.products %}
+            <img
+              src="{{ product.featured_image | img_url: 'large' }}"
+              alt="{{ product.title }}"
+              class="rounded-3xl w-full product-image-{{ block.id }} transition-all duration-700 ease-out {% if forloop.first %}opacity-100 scale-100{% else %}opacity-0 scale-95 hidden{% endif %}"
+              data-title1="{{ product.metafields.custom.title1 | escape }}"
+              data-title2="{{ product.metafields.custom.title2 | escape }}"
+              data-title3="{{ product.metafields.custom.title3 | escape }}"
+              data-description="{{ product.metafields.custom.description_short | escape }}"
+              data-producturl="{{ product.url }}"
+              width="580"
+              height="580"
+            >
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="bg-gray-300 w-full h-64 flex items-center justify-center text-gray-600">Select products</div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  // assets/product-carousel.js
+  console.log('initProductCarousel');
+  function initProductCarousel(blockId) {
+    const images = document.querySelectorAll('.product-image-' + blockId);
+    const title1 = document.getElementById('title-1-' + blockId);
+    const title2 = document.getElementById('title-2-' + blockId);
+    const title3 = document.getElementById('title-3-' + blockId);
+    const description = document.getElementById('product-description-' + blockId);
+    const buttonContainer = document.getElementById('button-container-' + blockId);
+    const productButton = document.getElementById('product-button-' + blockId);
+    const carouselContainer = document.getElementById('carousel-container-' + blockId);
+    const carouselWrapper = document.getElementById('carousel-wrapper-' + blockId);
+    const textContainer = document.getElementById('text-container-' + blockId);
+
+    let currentIndex = 0;
+    let isAnimating = false;
+
+    // Initial animation on load
+    setTimeout(() => {
+      carouselContainer.classList.remove('opacity-0');
+      carouselWrapper.classList.remove('opacity-0', 'scale-95');
+
+      setTimeout(() => {
+        initializeCarousel();
+        textContainer.classList.remove('opacity-0', 'translate-y-8');
+        title1.parentElement.classList.remove('opacity-0', 'translate-y-8');
+        description.classList.remove('opacity-0', 'translate-y-8');
+
+        setTimeout(() => {
+          buttonContainer.classList.remove('opacity-0', 'translate-y-8');
+        }, 300);
+      }, 500);
+    }, 500);
+
+    function initializeCarousel() {
+      const firstImage = images[0];
+
+      if (firstImage) {
+        title1.textContent = firstImage.dataset.title1;
+        title2.textContent = firstImage.dataset.title2;
+        title3.textContent = firstImage.dataset.title3;
+        description.textContent = firstImage.dataset.description;
+        productButton.href = firstImage.dataset.producturl;
+
+        buttonContainer.classList.remove('opacity-0', 'translate-y-8');
+      }
+    }
+
+    function updateCarousel() {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      const currentImage = images[currentIndex];
+      currentImage.classList.add('opacity-0', 'scale-95');
+
+      textContainer.classList.add('opacity-0', 'translate-y-8');
+      description.classList.add('opacity-0', 'translate-y-8');
+      buttonContainer.classList.add('opacity-0', 'translate-y-8');
+
+      setTimeout(() => {
+        currentImage.classList.add('hidden');
+
+        currentIndex = (currentIndex + 1) % images.length;
+        const nextImage = images[currentIndex];
+        nextImage.classList.remove('hidden');
+
+        setTimeout(() => {
+          nextImage.classList.remove('opacity-0', 'scale-95');
+
+          setTimeout(() => {
+            title1.textContent = nextImage.dataset.title1;
+            title2.textContent = nextImage.dataset.title2;
+            title3.textContent = nextImage.dataset.title3;
+            description.textContent = nextImage.dataset.description;
+            productButton.href = nextImage.dataset.producturl;
+
+            textContainer.classList.remove('opacity-0', 'translate-y-8');
+            description.classList.remove('opacity-0', 'translate-y-8');
+
+            setTimeout(() => {
+              buttonContainer.classList.remove('opacity-0', 'translate-y-8');
+              isAnimating = false;
+            }, 300);
+          }, 500);
+        }, 100);
+      }, 500);
+    }
+
+    const delay = Math.max(3000, {{block.settings.delay}} || 5000);
+    setInterval(updateCarousel, delay);
+  }
+
+  // Initialize all product carousels on the page
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[id^="carousel-container-"]').forEach((container) => {
+      const blockId = container.id.replace('carousel-container-', '');
+      initProductCarousel(blockId);
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Product Carousel",
+  "target": "section",
+  "settings": [
+    {
+      "type": "product_list",
+      "id": "products",
+      "label": "Select products"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button text",
+      "default": "Shop now"
+    },
+    {
+      "type": "number",
+      "id": "delay",
+      "label": "Change delay (ms)",
+      "default": 5000,
+      "info": "Minimum 3000ms"
+    },
+    {
+      "type": "header",
+      "content": "Product Metafields"
+    },
+    {
+      "type": "paragraph",
+      "content": "To edit titles and descriptions, click the links below:"
+    },
+    {
+      "type": "paragraph",
+      "content": "[Edit products content in admin](/admin/bulk?resource_name=Product&edit=metafields.custom.title1,metafields.custom.title2,metafields.custom.title3,metafields.custom.description_short)"
+    }
+  ]
+}
+{% endschema %}

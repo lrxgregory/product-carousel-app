@@ -1,0 +1,32 @@
+{
+  "metafields": [
+    {
+      "namespace": "custom",
+      "key": "test1",
+      "name": "Test Line 1",
+      "type": "single_line_text_field",
+      "owner_type": "product"
+    },
+    {
+      "namespace": "custom",
+      "key": "test2",
+      "name": "Test Line 2",
+      "type": "single_line_text_field",
+      "owner_type": "product"
+    },
+    {
+      "namespace": "custom",
+      "key": "test3",
+      "name": "Test Line 3",
+      "type": "single_line_text_field",
+      "owner_type": "product"
+    },
+    {
+      "namespace": "custom",
+      "key": "description_short",
+      "name": "Short Description",
+      "type": "single_line_text_field",
+      "owner_type": "product"
+    }
+  ]
+}
