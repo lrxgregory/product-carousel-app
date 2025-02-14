@@ -43,11 +43,56 @@ export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
 export const sessionStorage = shopify.sessionStorage;
 
-async function createProductMetafieldsIfNeeded(session: any) {
+async function getExistingProductMetafields(endpoint: string, accessToken: string) {
+  const query = `
+    {
+      metafieldDefinitions(first: 50, ownerType: PRODUCT, namespace: "custom") {
+        edges {
+          node {
+            id
+            namespace
+            key
+            type {
+              name
+            }
+          }
+        }
+      }
+    }
+  `;
 
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+
+    if (result.errors) {
+      console.error("🚨 GraphQL Error:", result.errors);
+      return [];
+    }
+
+    const definitions = result.data?.metafieldDefinitions?.edges.map((edge: any) => edge.node) || [];
+    console.log(`🔍 Found metafield definitions:`, definitions);
+    return definitions;
+  } catch (error) {
+    console.error(`❌ Error while retrieving existing Metafields:`, error);
+    return [];
+  }
+}
+
+async function createProductMetafieldsIfNeeded(session: any) {
   const endpoint = `https://${session.shop}/admin/api/${ApiVersion.January25}/graphql.json`;
 
+  console.log("🔍 Checking existing metafields...");
   const existingMetafields = await getExistingProductMetafields(endpoint, session.accessToken);
+  console.log(`📊 Found ${existingMetafields.length} existing metafields`);
 
   for (const metafield of metafieldsConfig.metafields) {
     const alreadyExists = existingMetafields.some(
@@ -55,9 +100,11 @@ async function createProductMetafieldsIfNeeded(session: any) {
     );
 
     if (alreadyExists) {
-      console.log(`⏭️ Metafield "${metafield.key}" already exists, no need to recreate it.`);
+      console.log(`⏭️ Metafield "${metafield.namespace}.${metafield.key}" already exists, skipping.`);
       continue;
     }
+
+    console.log(`📝 Creating new metafield "${metafield.namespace}.${metafield.key}"...`);
 
     const mutation = `
       mutation {
@@ -97,49 +144,14 @@ async function createProductMetafieldsIfNeeded(session: any) {
 
       const result = await response.json();
       if (result.data?.metafieldDefinitionCreate?.userErrors?.length) {
-        console.error(`❌ Error for ${metafield.key}:`, result.data.metafieldDefinitionCreate.userErrors);
+        console.error(`❌ Error for ${metafield.namespace}.${metafield.key}:`,
+          result.data.metafieldDefinitionCreate.userErrors
+        );
       } else {
-        console.log(`✅ Metafield "${metafield.key}" successfully created!`);
+        console.log(`✅ Metafield "${metafield.namespace}.${metafield.key}" successfully created!`);
       }
     } catch (error) {
-      console.error(`❌ General error for "${metafield.key}":`, error);
+      console.error(`❌ General error for "${metafield.namespace}.${metafield.key}":`, error);
     }
-  }
-}
-
-/**
- * 🔍 Retrieves existing Metafields
- */
-async function getExistingProductMetafields(endpoint: string, accessToken: string) {
-  const query = `
-    {
-      shop {
-        metafieldDefinitions(first: 50, ownerType: PRODUCT) {
-          edges {
-            node {
-              namespace
-              key
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "X-Shopify-Access-Token": accessToken,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query }),
-    });
-
-    const result = await response.json();
-    return result.data?.shop?.metafieldDefinitions?.edges.map((edge: any) => edge.node) || [];
-  } catch (error) {
-    console.error(`❌ Error while retrieving existing Metafields:`, error);
-    return [];
   }
 }
