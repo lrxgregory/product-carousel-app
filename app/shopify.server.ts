@@ -28,7 +28,7 @@ const shopify = shopifyApp({
 
   hooks: {
     afterAuth: async ({ session }) => {
-      console.log(`🔔 Auth réussie pour le shop: ${session.shop}. Vérification et création des Metafields...`);
+      console.log(`🔔 Successful auth for shop: ${session.shop}. Checking and creating Metafields...`);
       await createProductMetafieldsIfNeeded(session);
     },
   },
@@ -55,7 +55,7 @@ async function createProductMetafieldsIfNeeded(session: any) {
     );
 
     if (alreadyExists) {
-      console.log(`⏭️ Metafield "${metafield.key}" existe déjà, pas besoin de le recréer.`);
+      console.log(`⏭️ Metafield "${metafield.key}" already exists, no need to recreate it.`);
       continue;
     }
 
@@ -66,7 +66,7 @@ async function createProductMetafieldsIfNeeded(session: any) {
           namespace: "${metafield.namespace}",
           key: "${metafield.key}",
           type: "${metafield.type}",
-          ownerType: "${metafield.owner_type}"
+          ownerType: ${metafield.owner_type.toUpperCase()}
         }) {
           createdDefinition {
             id
@@ -97,19 +97,18 @@ async function createProductMetafieldsIfNeeded(session: any) {
 
       const result = await response.json();
       if (result.data?.metafieldDefinitionCreate?.userErrors?.length) {
-        console.error(`❌ Erreur pour ${metafield.key}:`, result.data.metafieldDefinitionCreate.userErrors);
+        console.error(`❌ Error for ${metafield.key}:`, result.data.metafieldDefinitionCreate.userErrors);
       } else {
-        console.log(metafieldsConfig);
-        console.log(`✅ Metafield "${metafield.key}" créé avec succès !`);
+        console.log(`✅ Metafield "${metafield.key}" successfully created!`);
       }
     } catch (error) {
-      console.error(`❌ Erreur générale pour "${metafield.key}" :`, error);
+      console.error(`❌ General error for "${metafield.key}":`, error);
     }
   }
 }
 
 /**
- * 🔍 Récupère les Metafields existants
+ * 🔍 Retrieves existing Metafields
  */
 async function getExistingProductMetafields(endpoint: string, accessToken: string) {
   const query = `
@@ -140,7 +139,7 @@ async function getExistingProductMetafields(endpoint: string, accessToken: strin
     const result = await response.json();
     return result.data?.shop?.metafieldDefinitions?.edges.map((edge: any) => edge.node) || [];
   } catch (error) {
-    console.error(`❌ Erreur lors de la récupération des Metafields existants :`, error);
+    console.error(`❌ Error while retrieving existing Metafields:`, error);
     return [];
   }
 }
