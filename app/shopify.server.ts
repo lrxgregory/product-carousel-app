@@ -7,6 +7,8 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
 
+import metafieldsConfig from "../extensions/config/metafields.json";
+
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
   apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
@@ -26,8 +28,8 @@ const shopify = shopifyApp({
 
   hooks: {
     afterAuth: async ({ session }) => {
-      console.log(`🔔 Auth réussie pour le shop: ${session.shop}. Création des Metafields...`);
-      await createProductMetafields(session);
+      console.log(`🔔 Auth réussie pour le shop: ${session.shop}. Vérification et création des Metafields...`);
+      await createProductMetafieldsIfNeeded(session);
     },
   },
 });
@@ -41,20 +43,22 @@ export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
 export const sessionStorage = shopify.sessionStorage;
 
-/**
- * 🔨 Crée les Metafields pour les produits
- */
-async function createProductMetafields(session: any) {
-  const metafields = [
-    { namespace: "custom", key: "test1", name: "Test Line 1", type: "single_line_text_field" },
-    { namespace: "custom", key: "test2", name: "Test Line 2", type: "single_line_text_field" },
-    { namespace: "custom", key: "test3", name: "Test Line 3", type: "single_line_text_field" },
-    { namespace: "custom", key: "description_short", name: "Short Description", type: "single_line_text_field" },
-  ];
+async function createProductMetafieldsIfNeeded(session: any) {
 
   const endpoint = `https://${session.shop}/admin/api/${ApiVersion.January25}/graphql.json`;
 
-  for (const metafield of metafields) {
+  const existingMetafields = await getExistingProductMetafields(endpoint, session.accessToken);
+
+  for (const metafield of metafieldsConfig.metafields) {
+    const alreadyExists = existingMetafields.some(
+      (m: any) => m.namespace === metafield.namespace && m.key === metafield.key
+    );
+
+    if (alreadyExists) {
+      console.log(`⏭️ Metafield "${metafield.key}" existe déjà, pas besoin de le recréer.`);
+      continue;
+    }
+
     const mutation = `
       mutation {
         metafieldDefinitionCreate(definition: {
@@ -62,7 +66,7 @@ async function createProductMetafields(session: any) {
           namespace: "${metafield.namespace}",
           key: "${metafield.key}",
           type: "${metafield.type}",
-          ownerType: PRODUCT
+          ownerType: "${metafield.owner_type}"
         }) {
           createdDefinition {
             id
@@ -93,12 +97,50 @@ async function createProductMetafields(session: any) {
 
       const result = await response.json();
       if (result.data?.metafieldDefinitionCreate?.userErrors?.length) {
-        console.error(`❌ Erreur lors de la création du Metafield ${metafield.key}:`, result.data.metafieldDefinitionCreate.userErrors);
+        console.error(`❌ Erreur pour ${metafield.key}:`, result.data.metafieldDefinitionCreate.userErrors);
       } else {
+        console.log(metafieldsConfig);
         console.log(`✅ Metafield "${metafield.key}" créé avec succès !`);
       }
     } catch (error) {
-      console.error(`❌ Erreur générale lors de la création du Metafield "${metafield.key}" :`, error);
+      console.error(`❌ Erreur générale pour "${metafield.key}" :`, error);
     }
+  }
+}
+
+/**
+ * 🔍 Récupère les Metafields existants
+ */
+async function getExistingProductMetafields(endpoint: string, accessToken: string) {
+  const query = `
+    {
+      shop {
+        metafieldDefinitions(first: 50, ownerType: PRODUCT) {
+          edges {
+            node {
+              namespace
+              key
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+    return result.data?.shop?.metafieldDefinitions?.edges.map((edge: any) => edge.node) || [];
+  } catch (error) {
+    console.error(`❌ Erreur lors de la récupération des Metafields existants :`, error);
+    return [];
   }
 }

@@ -2,31 +2,31 @@
   "metafields": [
     {
       "namespace": "custom",
-      "key": "test1",
-      "name": "Test Line 1",
+      "key": "carouselTitle1",
+      "name": "Carousel title 1",
       "type": "single_line_text_field",
-      "owner_type": "product"
+      "owner_type": "PRODUCT"
     },
     {
       "namespace": "custom",
-      "key": "test2",
-      "name": "Test Line 2",
+      "key": "carouselTitle2",
+      "name": "Carousel title 2",
       "type": "single_line_text_field",
-      "owner_type": "product"
+      "owner_type": "PRODUCT"
     },
     {
       "namespace": "custom",
-      "key": "test3",
-      "name": "Test Line 3",
+      "key": "carouselTitle3",
+      "name": "Carousel title 3",
       "type": "single_line_text_field",
-      "owner_type": "product"
+      "owner_type": "PRODUCT"
     },
     {
       "namespace": "custom",
-      "key": "description_short",
-      "name": "Short Description",
+      "key": "carouselDescriptionShort",
+      "name": "Carousel short description",
       "type": "single_line_text_field",
-      "owner_type": "product"
+      "owner_type": "PRODUCT"
     }
   ]
 }
