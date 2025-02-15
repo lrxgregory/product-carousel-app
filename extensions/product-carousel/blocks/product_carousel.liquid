@@ -30,7 +30,7 @@
       style="color: {{ block.settings.carousel_description_color }};"
     ></h3>
 
-    {% if block.settings.button_text != blank %}
+    {% if block.settings.show_button == true and block.settings.button_text != blank %}
       <div
         class="flex font-bold uppercase items-center gap-2 !text-3xl opacity-0 translate-y-8 transition-all duration-500 ease-out delay-900"
         id="button-container-{{ block.id }}"
@@ -392,6 +392,12 @@
       "type": "product_list",
       "id": "products",
       "label": "Select products"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_button",
+      "label": "Show button",
+      "default": true
     },
     {
       "type": "text",
