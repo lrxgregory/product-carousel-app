@@ -14,195 +14,215 @@
     class="w-full md:w-1/2 space-y-5 md:text-left opacity-0 translate-y-8 transition-all duration-700 ease-out delay-300"
     id="text-container-{{ block.id }}"
   >
-    <h1
+    <h2
       id="product-title-{{ block.id }}"
       class="text-6xl font-bold uppercase pb-16 opacity-0 translate-y-8 transition-all duration-500 ease-out delay-500"
+      style="color: {{ block.settings.carousel_title_color }};"
     >
       <span id="title-1-{{ block.id }}" class="block"></span>
       <span id="title-2-{{ block.id }}" class="block"></span>
       <span id="title-3-{{ block.id }}" class="block"></span>
-    </h1>
+    </h2>
 
-    <h2
+    <h3
       id="product-description-{{ block.id }}"
       class="!text-3xl py-4 opacity-0 translate-y-8 transition-all duration-500 ease-out delay-700"
-    ></h2>
+      style="color: {{ block.settings.carousel_description_color }};"
+    ></h3>
 
     {% if block.settings.button_text != blank %}
       <div
         class="flex font-bold uppercase items-center gap-2 !text-3xl opacity-0 translate-y-8 transition-all duration-500 ease-out delay-900"
         id="button-container-{{ block.id }}"
       >
-        <a id="product-button-{{ block.id }}" href="" class="flex items-center gap-2">
+        <a
+          id="product-button-{{ block.id }}"
+          href=""
+          class="flex items-center gap-2"
+          style="color: {{ block.settings.carousel_button_color }};"
+        >
           {{ block.settings.button_text }}
-          <button class="border rounded-3xl px-4 flex items-center justify-center transition-transform hover:translate-x-2 duration-300">
+          <button class="px-4 flex items-center justify-center transition-transform hover:translate-x-2 duration-300">
             {% case block.settings.button_icon %}
               {% when 'arrow-right' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5m14 0-4 4m4-4-4-4"/>
                 </svg>
               {% when 'arrow-left' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4"/>
                 </svg>
               {% when 'cart' %}
                 <!-- Shopping Cart -->
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h1.5L9 16m0 0h8m-8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-8.5-3h9.25L19 7H7.312"/>
                 </svg>
               {% when 'heart' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.01 6.001C6.5 1 1 8 5.782 13.001L12.011 20l6.23-7C23 8 17.5 1 12.01 6.002Z"/>
                 </svg>
 
               {% when 'star' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-width="2" d="M11.083 5.104c.35-.8 1.485-.8 1.834 0l1.752 4.022a1 1 0 0 0 .84.597l4.463.342c.9.069 1.255 1.2.556 1.771l-3.33 2.723a1 1 0 0 0-.337 1.016l1.03 4.119c.214.858-.71 1.552-1.474 1.106l-3.913-2.281a1 1 0 0 0-1.008 0L7.583 20.8c-.764.446-1.688-.248-1.474-1.106l1.03-4.119A1 1 0 0 0 6.8 14.56l-3.33-2.723c-.698-.571-.342-1.702.557-1.771l4.462-.342a1 1 0 0 0 .84-.597l1.753-4.022Z"/>
                 </svg>
 
               {% when 'chevron-right' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m10 16 4-4-4-4"/>
                 </svg>
 
               {% when 'chevron-left' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14 8-4 4 4 4"/>
                 </svg>
 
               {% when 'arrow-up' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v13m0-13 4 4m-4-4-4 4"/>
                 </svg>
 
               {% when 'arrow-down' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 14-4-4m4 4 4-4"/>
                 </svg>
 
               {% when 'cash' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M8 7V6a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-1M3 18v-7a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Zm8-3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/>
                 </svg>
               {% when 'credit-card' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M6 14h2m3 0h5M3 7v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1Z"/>
                 </svg>
               {% when 'wallet' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8H5m12 0a1 1 0 0 1 1 1v2.6M17 8l-4-4M5 8a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.6M5 8l4-4 4 4m6 4h-4a2 2 0 1 0 0 4h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1Z"/>
                 </svg>
               {% when 'bag' %}
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-10 h-10"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
                   fill="none"
                   viewBox="0 0 24 24"
+                  style="color: {{ block.settings.carousel_button_color }};"
                 >
                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10V6a3 3 0 0 1 3-3v0a3 3 0 0 1 3 3v4m3-2 .917 11.923A1 1 0 0 1 17.92 21H6.08a1 1 0 0 1-.997-1.077L6 8h12Z"/>
                 </svg>
               {% else %}
                 <!-- Icône par défaut (Arrow Right) -->
-                <svg class="w-6 h-6" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg class="w-8 h8" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M7 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             {% endcase %}
@@ -243,8 +263,6 @@
 </div>
 
 <script>
-  // assets/product-carousel.js
-  console.log('initProductCarousel');
   function initProductCarousel(blockId) {
     const images = document.querySelectorAll('.product-image-' + blockId);
     const title1 = document.getElementById('title-1-' + blockId);
@@ -271,9 +289,12 @@
         title1.parentElement.classList.remove('opacity-0', 'translate-y-8');
         description.classList.remove('opacity-0', 'translate-y-8');
 
-        setTimeout(() => {
-          buttonContainer.classList.remove('opacity-0', 'translate-y-8');
-        }, 300);
+        // Vérifier si buttonContainer existe avant de manipuler ses classes
+        if (buttonContainer) {
+          setTimeout(() => {
+            buttonContainer.classList.remove('opacity-0', 'translate-y-8');
+          }, 300);
+        }
       }, 500);
     }, 500);
 
@@ -285,9 +306,16 @@
         title2.textContent = firstImage.dataset.title2;
         title3.textContent = firstImage.dataset.title3;
         description.textContent = firstImage.dataset.description;
-        productButton.href = firstImage.dataset.producturl;
 
-        buttonContainer.classList.remove('opacity-0', 'translate-y-8');
+        // Vérifier si productButton existe avant de définir son href
+        if (productButton) {
+          productButton.href = firstImage.dataset.producturl;
+        }
+
+        // Vérifier si buttonContainer existe avant de manipuler ses classes
+        if (buttonContainer) {
+          buttonContainer.classList.remove('opacity-0', 'translate-y-8');
+        }
       }
     }
 
@@ -300,7 +328,11 @@
 
       textContainer.classList.add('opacity-0', 'translate-y-8');
       description.classList.add('opacity-0', 'translate-y-8');
-      buttonContainer.classList.add('opacity-0', 'translate-y-8');
+
+      // Vérifier si buttonContainer existe avant de manipuler ses classes
+      if (buttonContainer) {
+        buttonContainer.classList.add('opacity-0', 'translate-y-8');
+      }
 
       setTimeout(() => {
         currentImage.classList.add('hidden');
@@ -317,13 +349,20 @@
             title2.textContent = nextImage.dataset.title2;
             title3.textContent = nextImage.dataset.title3;
             description.textContent = nextImage.dataset.description;
-            productButton.href = nextImage.dataset.producturl;
+
+            // Vérifier si productButton existe avant de définir son href
+            if (productButton) {
+              productButton.href = nextImage.dataset.producturl;
+            }
 
             textContainer.classList.remove('opacity-0', 'translate-y-8');
             description.classList.remove('opacity-0', 'translate-y-8');
 
             setTimeout(() => {
-              buttonContainer.classList.remove('opacity-0', 'translate-y-8');
+              // Vérifier si buttonContainer existe avant de manipuler ses classes
+              if (buttonContainer) {
+                buttonContainer.classList.remove('opacity-0', 'translate-y-8');
+              }
               isAnimating = false;
             }, 300);
           }, 500);
@@ -380,6 +419,24 @@
         { "value": "bag", "label": "Bag 👜" }
       ],
       "default": "arrow-right"
+    },
+    {
+      "type": "color",
+      "id": "carousel_title_color",
+      "label": "Carousel title color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "carousel_description_color",
+      "label": "Carousel description color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "carousel_button_color",
+      "label": "Carousel button color",
+      "default": "#000000"
     },
     {
       "type": "number",
