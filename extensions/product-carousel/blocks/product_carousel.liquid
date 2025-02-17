@@ -360,7 +360,7 @@
       elements.title2.textContent = image.dataset.title2;
       elements.title3.textContent = image.dataset.title3;
       elements.description.textContent = image.dataset.description;
-      elements.price.textContent = image.dataset.price;
+      if(elements.price) elements.price.textContent = image.dataset.price;
       if (elements.productButton) elements.productButton.href = image.dataset.producturl;
       showTextAnimation(false);
     };
