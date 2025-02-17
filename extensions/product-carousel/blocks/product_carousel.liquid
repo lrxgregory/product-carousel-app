@@ -63,7 +63,6 @@
           id="product-button-{{ block.id }}"
           href=""
           class="flex items-center gap-2"
-
           aria-label="View product details"
         >
           {{ block.settings.button_text }}
@@ -251,7 +250,7 @@
 
   <!-- Product carousel -->
   <div
-    class="w-full md:w-1/2 relative opacity-0 {{block.settings.image_transition_effet}} transition-all duration-700 ease-out"
+    class="w-full md:w-1/2 relative opacity-0 {{ block.settings.image_transition_effet }} transition-all duration-700 ease-out"
     id="carousel-wrapper-{{ block.id }}"
   >
     {% if block.settings.products != blank %}
@@ -264,10 +263,7 @@
             <img
               src="{{ product.featured_image | image_url: width: 580, height: 580 }}"
               alt="{{ product.title }}"
-              class="
-                rounded-3xl w-full product-image-{{ block.id }} transition-all duration-700 ease-out
-                {% if forloop.first %}opacity-100{% else %}opacity-0 {{ block.settings.image_transition_effet }} hidden{% endif %}
-              "
+              class="rounded-3xl w-full product-image-{{ block.id }} transition-all duration-700 ease-out {% if forloop.first %}opacity-100{% else %}opacity-0 {{ block.settings.image_transition_effet }} hidden{% endif %}"
               data-title1="{{ product.metafields.custom.title1 | escape }}"
               data-title2="{{ product.metafields.custom.title2 | escape }}"
               data-title3="{{ product.metafields.custom.title3 | escape }}"
@@ -291,7 +287,7 @@
   function initProductCarousel(blockId) {
     const images = document.querySelectorAll(`.product-image-${blockId}`);
     const elements = {
-      titleContainer: document.getElementById(`product-title-${blockId}`), // Le conteneur du h2
+      titleContainer: document.getElementById(`product-title-${blockId}`),
       title1: document.getElementById(`title-1-${blockId}`),
       title2: document.getElementById(`title-2-${blockId}`),
       title3: document.getElementById(`title-3-${blockId}`),
@@ -302,32 +298,62 @@
       carouselContainer: document.getElementById(`carousel-container-${blockId}`),
       carouselWrapper: document.getElementById(`carousel-wrapper-${blockId}`),
       textContainer: document.getElementById(`text-container-${blockId}`),
+      productCarousel: document.getElementById(`product-carousel-${blockId}`)
     };
-
+  
     let currentIndex = 0;
     let isAnimating = false;
     const delay = Math.max(3000, {{ block.settings.delay }} || 5000);
     const transitionClass = '{{ block.settings.image_transition_effet }}';
-
+    const animationDuration = 700;
+  
     const toggleClasses = (element, classes, add = true) => {
       if (!element) return;
       classes.forEach(cls => element.classList[add ? 'add' : 'remove'](cls));
     };
-
+  
     const showInitialState = () => {
       toggleClasses(elements.carouselContainer, ['opacity-0'], false);
       toggleClasses(elements.carouselWrapper, ['opacity-0', transitionClass], false);
       setTimeout(() => {
         initializeCarousel();
         showTextAnimation(false);
-      }, 500);
+      }, animationDuration);
     };
-
+  
     const initializeCarousel = () => {
       const firstImage = images[0];
       if (firstImage) updateContent(firstImage);
+      
+      // Ensure product carousel has consistent height by setting it to match the first image
+      if (firstImage && elements.productCarousel) {
+        const setCarouselHeight = () => {
+          const height = firstImage.offsetHeight;
+          if (height > 0) {
+            elements.productCarousel.style.position = 'relative';
+            elements.productCarousel.style.height = `${height}px`;
+            
+            // Position all images absolutely within the carousel
+            images.forEach(img => {
+              img.style.position = 'absolute';
+              img.style.top = '0';
+              img.style.left = '0';
+              img.style.width = '100%';
+            });
+          } else {
+            // If height is not available yet, try again
+            setTimeout(setCarouselHeight, 100);
+          }
+        };
+        
+        if (firstImage.complete) {
+          setCarouselHeight();
+        } else {
+          firstImage.onload = setCarouselHeight;
+        }
+      }
     };
-
+  
     const updateContent = (image) => {
       if (!image) return;
       elements.title1.textContent = image.dataset.title1;
@@ -338,47 +364,67 @@
       if (elements.productButton) elements.productButton.href = image.dataset.producturl;
       showTextAnimation(false);
     };
-
+  
     const showTextAnimation = (isHide = false) => {
-      const method = isHide ? 'add' : 'remove';
       toggleClasses(elements.textContainer, ['opacity-0', 'translate-y-8'], isHide);
-      toggleClasses(elements.titleContainer, ['opacity-0', 'translate-y-8'], isHide); // Animation du h2
+      toggleClasses(elements.titleContainer, ['opacity-0', 'translate-y-8'], isHide);
       toggleClasses(elements.description, ['opacity-0', 'translate-y-8'], isHide);
       toggleClasses(elements.price, ['opacity-0', 'translate-y-8'], isHide);
       if (elements.buttonContainer) {
         toggleClasses(elements.buttonContainer, ['opacity-0', 'translate-y-8'], isHide);
       }
     };
-
+  
     const updateCarousel = () => {
       if (isAnimating) return;
       isAnimating = true;
-
-      const currentImage = images[currentIndex];
-      toggleClasses(currentImage, ['opacity-100'], false);
-      toggleClasses(currentImage, ['opacity-0', transitionClass], true);
+    
+      // 1. Fade out text
       showTextAnimation(true);
-
+    
       setTimeout(() => {
-        currentImage.classList.add('hidden');
+        // 2. Hide current image
+        const currentImage = images[currentIndex];
+        toggleClasses(currentImage, ['opacity-100'], false);
+        toggleClasses(currentImage, ['opacity-0', transitionClass], true);
+    
+        // 3. Prepare next image
         currentIndex = (currentIndex + 1) % images.length;
         const nextImage = images[currentIndex];
+        
+        // Remove hidden class and set initial position
         nextImage.classList.remove('hidden');
-
+        
+        // 4. Show next image after a short delay
         setTimeout(() => {
           toggleClasses(nextImage, ['opacity-0', transitionClass], false);
           toggleClasses(nextImage, ['opacity-100'], true);
-          updateContent(nextImage);
-          isAnimating = false;
-        }, 300);
-      }, 500);
+        
+          // 5. Update content and clean up
+          setTimeout(() => {
+            currentImage.classList.add('hidden');
+            updateContent(nextImage);
+            isAnimating = false;
+          }, animationDuration);
+        }, 50); // Small delay for CSS transition
+      }, animationDuration);
     };
-
+  
     setTimeout(showInitialState, 500);
     setInterval(updateCarousel, delay);
   }
 
+  function preloadImages(images) {
+    images.forEach(img => {
+      const image = new Image();
+      image.src = img.src;
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
+    const images = document.querySelectorAll('.product-image');
+    preloadImages(images);
+
     document.querySelectorAll('[id^="carousel-container-"]').forEach(container => {
       const blockId = container.id.replace('carousel-container-', '');
       initProductCarousel(blockId);
