@@ -27,11 +27,21 @@
       <span id="title-3-{{ block.id }}" class="block"></span>
     </h2>
 
-    <h3
-      id="product-description-{{ block.id }}"
-      class="!text-3xl py-4 opacity-0 translate-y-8 transition-all duration-500 ease-out delay-700"
-      style="color: {{ block.settings.carousel_description_color }};"
-    ></h3>
+    <div class="product-description-price py-4">
+      <h3
+        id="product-description-{{ block.id }}"
+        class="!text-3xl mb-0 opacity-0 translate-y-8 transition-all duration-500 ease-out delay-700"
+        style="color: {{ block.settings.carousel_description_color }};"
+      ></h3>
+
+      {% if block.settings.show_price == true %}
+        <span
+          id="product-price-{{ block.id }}"
+          class="opacity-0 translate-y-8 transition-all duration-500 ease-out delay-700"
+          style="color: {{ block.settings.carousel_price_color }};"
+        ></span>
+      {% endif %}
+    </div>
 
     {% if block.settings.show_button == true and block.settings.button_text != blank %}
       {% assign button_classes = 'flex font-bold uppercase items-center gap-2 !text-3xl opacity-0 translate-y-8 transition-all duration-500 ease-out delay-900 w-fit px-4' %}
@@ -262,6 +272,7 @@
               data-title2="{{ product.metafields.custom.title2 | escape }}"
               data-title3="{{ product.metafields.custom.title3 | escape }}"
               data-description="{{ product.metafields.custom.description_short | escape }}"
+              data-price="{{ product.price | money_with_currency }}"
               data-producturl="{{ product.url }}"
               width="580"
               height="580"
@@ -405,12 +416,51 @@
     {
       "type": "product_list",
       "id": "products",
-      "label": "Select products"
+      "label": "Select products",
+      "limit": 3
+    },
+    {
+      "type": "header",
+      "content": "Carousel text color"
+    },
+    {
+      "type": "color",
+      "id": "carousel_title_color",
+      "label": "Carousel title color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "carousel_description_color",
+      "label": "Carousel description color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "carousel_price_color",
+      "label": "Carousel price color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Carousel button settings"
+    },
+    {
+      "type": "color",
+      "id": "carousel_button_color",
+      "label": "Carousel button color",
+      "default": "#000000"
     },
     {
       "type": "checkbox",
       "id": "show_button",
       "label": "Show button",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_price",
+      "label": "Show price",
       "default": true
     },
     {
@@ -464,22 +514,8 @@
       "default": "arrow-right"
     },
     {
-      "type": "color",
-      "id": "carousel_title_color",
-      "label": "Carousel title color",
-      "default": "#000000"
-    },
-    {
-      "type": "color",
-      "id": "carousel_description_color",
-      "label": "Carousel description color",
-      "default": "#000000"
-    },
-    {
-      "type": "color",
-      "id": "carousel_button_color",
-      "label": "Carousel button color",
-      "default": "#000000"
+      "type": "header",
+      "content": "Image transition settings"
     },
     {
       "type": "select",
