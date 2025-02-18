@@ -14,12 +14,12 @@
 >
   <!-- Dynamic text -->
   <div
-    class="w-full md:w-1/2 md:space-y-5 md:text-left opacity-0 translate-y-8 transition-all duration-700 ease-out delay-300"
+    class="w-full md:w-1/2 md:space-y-5 md:text-left opacity-0 translate-y-8 transition-all duration-700 ease-out"
     id="text-container-{{ block.id }}"
   >
     <h2
       id="product-title-{{ block.id }}"
-      class="!text-6xl !font-bold uppercase opacity-0 translate-y-8 transition-all duration-500 ease-out delay-500"
+      class="!text-6xl !font-bold uppercase opacity-0 translate-y-8 transition-all duration-700 ease-out"
       style="color: {{ block.settings.carousel_title_color }};"
     >
       <span id="title-1-{{ block.id }}" class="block"></span>
@@ -30,21 +30,21 @@
     <div class="product-description-price py-4">
       <h3
         id="product-description-{{ block.id }}"
-        class="!text-3xl mb-0 opacity-0 translate-y-8 transition-all duration-500 ease-out delay-700"
+        class="!text-3xl mb-0 opacity-0 translate-y-8 transition-all duration-700 ease-out"
         style="color: {{ block.settings.carousel_description_color }};"
       ></h3>
 
       {% if block.settings.show_price == true %}
         <span
           id="product-price-{{ block.id }}"
-          class="opacity-0 translate-y-8 transition-all duration-500 ease-out delay-700"
+          class="opacity-0 translate-y-8 transition-all duration-700 ease-out"
           style="color: {{ block.settings.carousel_price_color }};"
         ></span>
       {% endif %}
     </div>
 
     {% if block.settings.show_button == true and block.settings.button_text != blank %}
-      {% assign button_classes = 'flex font-bold uppercase items-center gap-2 !text-3xl opacity-0 translate-y-8 transition-all duration-500 ease-out delay-900 w-fit px-4' %}
+      {% assign button_classes = 'flex font-bold uppercase items-center gap-2 !text-3xl opacity-0 translate-y-8 transition-all duration-700 ease-out w-fit px-4' %}
 
       {% if block.settings.button_border == true %}
         {% assign button_classes = button_classes | append: ' border' %}
@@ -67,7 +67,7 @@
         >
           {{ block.settings.button_text }}
           <button
-            class="flex items-center justify-center transition-transform hover:translate-x-2 duration-300"
+            class="flex items-center justify-center transition-transform hover:translate-x-2 duration-700"
             aria-hidden="true"
           >
             {% case block.settings.button_icon %}
@@ -303,15 +303,43 @@
   
     let currentIndex = 0;
     let isAnimating = false;
-    const delay = Math.max(3000, {{ block.settings.delay }} || 5000);
+    const imageChangeDelay = Math.min(5000, Math.max(3000, {{ block.settings.image_change_delay }} || 5000));
+    // Min 3000ms, max 5000ms
+    const textChangeDelay = Math.min(300, Math.max(200, {{ block.settings.text_change_delay }} || 200));
+    // Min 200ms, max 300ms
+
     const transitionClass = '{{ block.settings.image_transition_effet }}';
     const animationDuration = 700;
-  
+
     const toggleClasses = (element, classes, add = true) => {
       if (!element) return;
       classes.forEach(cls => element.classList[add ? 'add' : 'remove'](cls));
     };
-  
+
+    const showTextAnimation = (isHide = false) => {
+      let delay = 0;
+      const elementsToAnimate = [
+        elements.textContainer,    // Conteneur principal du texte
+        elements.titleContainer,   // Le h2 entier
+        elements.description,      // Le h3 description
+        elements.price,            // Le span prix
+        elements.buttonContainer   // Le bouton
+      ];
+    
+      elementsToAnimate.forEach((element) => {
+        if (element) {
+          setTimeout(() => {
+            if (isHide) {
+              element.classList.add('opacity-0', 'translate-y-8');
+            } else {
+              element.classList.remove('opacity-0', 'translate-y-8');
+            }
+          }, delay);
+          delay += textChangeDelay;
+        }
+      });
+    };
+
     const showInitialState = () => {
       toggleClasses(elements.carouselContainer, ['opacity-0'], false);
       toggleClasses(elements.carouselWrapper, ['opacity-0', transitionClass], false);
@@ -320,12 +348,11 @@
         showTextAnimation(false);
       }, animationDuration);
     };
-  
+
     const initializeCarousel = () => {
       const firstImage = images[0];
       if (firstImage) updateContent(firstImage);
       
-      // Ensure product carousel has consistent height by setting it to match the first image
       if (firstImage && elements.productCarousel) {
         const setCarouselHeight = () => {
           const height = firstImage.offsetHeight;
@@ -333,7 +360,6 @@
             elements.productCarousel.style.position = 'relative';
             elements.productCarousel.style.height = `${height}px`;
             
-            // Position all images absolutely within the carousel
             images.forEach(img => {
               img.style.position = 'absolute';
               img.style.top = '0';
@@ -341,7 +367,6 @@
               img.style.width = '100%';
             });
           } else {
-            // If height is not available yet, try again
             setTimeout(setCarouselHeight, 100);
           }
         };
@@ -365,53 +390,37 @@
       showTextAnimation(false);
     };
   
-    const showTextAnimation = (isHide = false) => {
-      toggleClasses(elements.textContainer, ['opacity-0', 'translate-y-8'], isHide);
-      toggleClasses(elements.titleContainer, ['opacity-0', 'translate-y-8'], isHide);
-      toggleClasses(elements.description, ['opacity-0', 'translate-y-8'], isHide);
-      toggleClasses(elements.price, ['opacity-0', 'translate-y-8'], isHide);
-      if (elements.buttonContainer) {
-        toggleClasses(elements.buttonContainer, ['opacity-0', 'translate-y-8'], isHide);
-      }
-    };
-  
     const updateCarousel = () => {
       if (isAnimating) return;
       isAnimating = true;
     
-      // 1. Fade out text
       showTextAnimation(true);
     
       setTimeout(() => {
-        // 2. Hide current image
         const currentImage = images[currentIndex];
         toggleClasses(currentImage, ['opacity-100'], false);
         toggleClasses(currentImage, ['opacity-0', transitionClass], true);
     
-        // 3. Prepare next image
         currentIndex = (currentIndex + 1) % images.length;
         const nextImage = images[currentIndex];
         
-        // Remove hidden class and set initial position
         nextImage.classList.remove('hidden');
         
-        // 4. Show next image after a short delay
         setTimeout(() => {
           toggleClasses(nextImage, ['opacity-0', transitionClass], false);
           toggleClasses(nextImage, ['opacity-100'], true);
         
-          // 5. Update content and clean up
           setTimeout(() => {
             currentImage.classList.add('hidden');
             updateContent(nextImage);
             isAnimating = false;
           }, animationDuration);
-        }, 50); // Small delay for CSS transition
+        }, 50);
       }, animationDuration);
     };
   
     setTimeout(showInitialState, 500);
-    setInterval(updateCarousel, delay);
+    setInterval(updateCarousel, imageChangeDelay);
   }
 
   function preloadImages(images) {
@@ -563,10 +572,17 @@
     },
     {
       "type": "number",
-      "id": "delay",
-      "label": "Change delay (ms)",
+      "id": "image_change_delay",
+      "label": "Délai entre les changements d'images (ms)",
       "default": 5000,
-      "info": "Minimum 3000ms"
+      "info": "Minimum 3000ms - Maximum 5000ms"
+    },
+    {
+      "type": "number",
+      "id": "text_change_delay",
+      "label": "Délai entre les changements de texte (ms)",
+      "default": 200,
+      "info": "Minimum 200ms - Maximum 300ms"
     },
     {
       "type": "header",
