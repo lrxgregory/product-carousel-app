@@ -14,12 +14,12 @@
 >
   <!-- Dynamic text -->
   <div
-    class="w-full md:w-1/2 md:space-y-5 md:text-left opacity-0 translate-y-8 transition-all duration-700 ease-out"
+    class="w-full md:w-1/2 md:space-y-5 md:text-left opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-700 ease-out"
     id="text-container-{{ block.id }}"
   >
     <h2
       id="product-title-{{ block.id }}"
-      class="!text-6xl !font-bold uppercase opacity-0 translate-y-8 transition-all duration-700 ease-out"
+      class="!text-6xl !font-bold uppercase opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-700 ease-out"
       style="color: {{ block.settings.carousel_title_color }};"
     >
       <span id="title-1-{{ block.id }}" class="block"></span>
@@ -30,21 +30,21 @@
     <div class="product-description-price py-4">
       <h3
         id="product-description-{{ block.id }}"
-        class="!text-3xl mb-0 opacity-0 translate-y-8 transition-all duration-700 ease-out"
+        class="!text-3xl mb-0 opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-700 ease-out"
         style="color: {{ block.settings.carousel_description_color }};"
       ></h3>
 
       {% if block.settings.show_price == true %}
         <span
           id="product-price-{{ block.id }}"
-          class="opacity-0 translate-y-8 transition-all duration-700 ease-out"
+          class="opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-700 ease-out"
           style="color: {{ block.settings.carousel_price_color }};"
         ></span>
       {% endif %}
     </div>
 
     {% if block.settings.show_button == true and block.settings.button_text != blank %}
-      {% assign button_classes = 'flex font-bold uppercase items-center gap-2 !text-3xl opacity-0 translate-y-8 transition-all duration-700 ease-out w-fit px-4' %}
+      {% assign button_classes = 'flex font-bold uppercase items-center gap-2 !text-3xl opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-700 ease-out w-fit px-4' %}
 
       {% if block.settings.button_border == true %}
         {% assign button_classes = button_classes | append: ' border' %}
@@ -250,7 +250,7 @@
 
   <!-- Product carousel -->
   <div
-    class="w-full md:w-1/2 relative opacity-0 {{ block.settings.image_transition_effet }} transition-all duration-700 ease-out"
+    class="w-full md:w-1/2 relative opacity-0 {{ block.settings.image_transition_effect }} transition-all duration-700 ease-out"
     id="carousel-wrapper-{{ block.id }}"
   >
     {% if block.settings.products != blank %}
@@ -263,7 +263,7 @@
             <img
               src="{{ product.featured_image | image_url: width: 580, height: 580 }}"
               alt="{{ product.title }}"
-              class="rounded-3xl w-full product-image-{{ block.id }} transition-all duration-700 ease-out {% if forloop.first %}opacity-100{% else %}opacity-0 {{ block.settings.image_transition_effet }} hidden{% endif %}"
+              class="rounded-3xl w-full product-image-{{ block.id }} transition-all duration-700 ease-out {% if forloop.first %}opacity-100{% else %}opacity-0 {{ block.settings.image_transition_effect }} hidden{% endif %}"
               data-title1="{{ product.metafields.custom.title1 | escape }}"
               data-title2="{{ product.metafields.custom.title2 | escape }}"
               data-title3="{{ product.metafields.custom.title3 | escape }}"
@@ -308,7 +308,8 @@
     const textChangeDelay = Math.min(300, Math.max(200, {{ block.settings.text_change_delay }} || 200));
     // Min 200ms, max 300ms
 
-    const transitionClass = '{{ block.settings.image_transition_effet }}';
+    const transitionClass = '{{ block.settings.image_transition_effect }}';
+    const textEffectClass = '{{ block.settings.text_transition_effect }}';
     const animationDuration = 700;
 
     const toggleClasses = (element, classes, add = true) => {
@@ -330,9 +331,9 @@
         if (element) {
           setTimeout(() => {
             if (isHide) {
-              element.classList.add('opacity-0', 'translate-y-8');
+              element.classList.add('opacity-0', textEffectClass);
             } else {
-              element.classList.remove('opacity-0', 'translate-y-8');
+              element.classList.remove('opacity-0', textEffectClass);
             }
           }, delay);
           delay += textChangeDelay;
@@ -548,11 +549,11 @@
     },
     {
       "type": "header",
-      "content": "Image transition settings"
+      "content": "Effects settings"
     },
     {
       "type": "select",
-      "id": "image_transition_effet",
+      "id": "image_transition_effect",
       "label": "Image transition",
       "default": "translate-x-full",
       "options": [
@@ -576,6 +577,26 @@
       "label": "Délai entre les changements d'images (ms)",
       "default": 5000,
       "info": "Minimum 3000ms - Maximum 5000ms"
+    },
+    {
+      "type": "select",
+      "id": "text_transition_effect",
+      "label": "Text transition",
+      "default": "translate-y-full",
+      "options": [
+        { "value": "translate-x-full", "label": "Translation sur l'axe X" },
+        { "value": "-translate-x-full", "label": "Translation sur l'axe X inverse" },
+        { "value": "translate-y-full", "label": "Translation sur l'axe Y" },
+        { "value": "-translate-y-full", "label": "Translation sur l'axe Y inverse" },
+        { "value": "scale-90", "label": "Zoom arrière (scale)" },
+        { "value": "scale-110", "label": "Zoom avant (scale)" },
+        { "value": "blur-sm", "label": "Flou léger" },
+        { "value": "rotate-5", "label": "Rotation légère" },
+        { "value": "-rotate-5", "label": "Rotation inverse" },
+        { "value": "scale-95", "label": "Zoom arrière" },
+        { "value": "scale-105", "label": "Zoom avant" },
+        { "value": "rotate-y-180", "label": "Flip 3D" }
+      ]
     },
     {
       "type": "number",
