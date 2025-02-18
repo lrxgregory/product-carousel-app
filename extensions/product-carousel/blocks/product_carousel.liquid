@@ -37,37 +37,37 @@
       {% if block.settings.show_price == true %}
         <span
           id="product-price-{{ block.id }}"
-          class="opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out"
+          class="opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out block"
           style="color: {{ block.settings.carousel_price_color }};"
         ></span>
       {% endif %}
     </div>
 
     {% if block.settings.show_button == true and block.settings.button_text != blank %}
-      {% assign button_classes = 'flex font-bold uppercase items-center gap-2 !text-3xl opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out w-fit px-4' %}
+      {% assign a_classes = 'flex items-center gap-2' %}
 
       {% if block.settings.button_border == true %}
-        {% assign button_classes = button_classes | append: ' border' %}
+        {% assign a_classes = a_classes | append: ' border px-4' %}
       {% endif %}
 
       {% if block.settings.button_border_radius != 'rounded-none' %}
-        {% assign button_classes = button_classes | append: ' ' | append: block.settings.button_border_radius %}
+        {% assign a_classes = a_classes | append: ' ' | append: block.settings.button_border_radius %}
       {% endif %}
 
       <div
-        class="{{ button_classes }}"
+        class="flex font-bold uppercase items-center gap-2 !text-3xl opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out"
         id="button-container-{{ block.id }}"
         style="color: {{ block.settings.carousel_button_color }};"
       >
         <a
           id="product-button-{{ block.id }}"
           href=""
-          class="flex items-center gap-2"
+          class="{{ a_classes }}"
           aria-label="View product details"
         >
           {{ block.settings.button_text }}
           <button
-            class="flex items-center justify-center transition-transform hover:translate-x-2 duration-{{ block.settings.animation_duration }}"
+            class="flex items-center justify-center"
             aria-hidden="true"
           >
             {% case block.settings.button_icon %}

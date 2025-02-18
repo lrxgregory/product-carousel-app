@@ -551,6 +551,9 @@
   .mb-0 {
     margin-bottom: calc(var(--spacing) * 0);
   }
+  .box-border {
+    box-sizing: border-box;
+  }
   .block {
     display: block;
   }
