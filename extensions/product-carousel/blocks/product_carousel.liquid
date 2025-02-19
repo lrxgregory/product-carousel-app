@@ -373,11 +373,11 @@
     // Event listeners for touch gestures
     elements.carouselContainer.addEventListener('touchstart', (e) => {
       touchStartX = e.touches[0].clientX;
-    });
+    }, { passive: true });
 
     elements.carouselContainer.addEventListener('touchmove', (e) => {
       touchEndX = e.touches[0].clientX;
-    });
+    }, { passive: true });
 
     elements.carouselContainer.addEventListener('touchend', () => {
       const swipeThreshold = 50; // Minimum distance to consider it a swipe
@@ -390,7 +390,7 @@
           nextSlide();
         }
       }
-    });
+    }, { passive: true });
 
     // Event listeners for buttons and indicators
     if (elements.prevButton) {
