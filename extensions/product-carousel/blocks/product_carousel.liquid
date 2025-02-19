@@ -12,17 +12,20 @@
   aria-roledescription="carousel"
   aria-label="Product carousel"
 >
-  <!-- Contrôles du slider -->
-  <button
-    type="button"
-    class="group absolute -start-4 top-0 z-30 flex h-full cursor-pointer items-center justify-center px-4"
-    data-carousel-prev
-  >
-    <span class="inline-flex h-10 w-10 items-center justify-center">
-      {% render 'chevron-left' %}
-      <span class="sr-only">Previous</span>
-    </span>
-  </button>
+  {% if block.settings.show_slider_arrows == true %}
+    <!-- Slider controls -->
+    <button
+      type="button"
+      class="group absolute -start-4 top-0 z-30 flex h-full cursor-pointer items-center justify-center px-4"
+      style="color: {{ block.settings.slider_arrows_color }};"
+      data-carousel-prev
+    >
+      <span class="inline-flex h-10 w-10 items-center justify-center">
+        {% render 'chevron-left' %}
+        <span class="sr-only">Previous</span>
+      </span>
+    </button>
+  {% endif %}
 
   <!-- Conteneur de texte -->
   <div
@@ -153,31 +156,37 @@
     {% endif %}
   </div>
 
-  <!-- Slider controls -->
-  <button
-    type="button"
-    class="group absolute -end-4 top-0 z-30 flex h-full cursor-pointer items-center justify-center px-4"
-    data-carousel-next
-  >
-    <span class="inline-flex h-10 w-10 items-center justify-center">
-      {% render 'chevron-right' %}
-      <span class="sr-only">Next</span>
-    </span>
-  </button>
+  {% if block.settings.show_slider_arrows == true %}
+    <!-- Slider controls -->
+    <button
+      type="button"
+      class="group absolute -end-4 top-0 z-30 flex h-full cursor-pointer items-center justify-center px-4"
+      style="color: {{ block.settings.slider_arrows_color }};"
+      data-carousel-next
+    >
+      <span class="inline-flex h-10 w-10 items-center justify-center">
+        {% render 'chevron-right' %}
+        <span class="sr-only">Next</span>
+      </span>
+    </button>
+  {% endif %}
 
-  <!-- Slider indicators -->
-  <div
-    id="slider-indicators-{{ block.id }}"
-    class="absolute z-30 flex -translate-x-1/2 left-1/2 space-x-10 rtl:space-x-reverse -bottom-7"
-  >
-    {% for product in block.settings.products %}
-      <button
-        class="w-3 h-3 rounded-full bg-gray-400 opacity-50 transition-all duration-500 cursor-pointer"
-        aria-label="Slide {{ forloop.index }}"
-        data-index="{{ forloop.index0 }}"
-      ></button>
-    {% endfor %}
-  </div>
+  {% if block.settings.show_slider_indicators == true %}
+    <!-- Slider indicators -->
+    <div
+      id="slider-indicators-{{ block.id }}"
+      class="absolute z-30 flex -translate-x-1/2 left-1/2 space-x-10 rtl:space-x-reverse -bottom-7 md:bottom-5"
+    >
+      {% for product in block.settings.products %}
+        <button
+          class="w-3 h-3 rounded-full opacity-50 transition-all duration-500 cursor-pointer"
+          aria-label="Slide {{ forloop.index }}"
+          data-index="{{ forloop.index0 }}"
+          style="background-color: {{ block.settings.slider_indicator_color }};"
+        ></button>
+      {% endfor %}
+    </div>
+  {% endif %}
 </div>
 
 {% comment %} Unused div for tailwin classes {% endcomment %}
@@ -503,6 +512,30 @@
         { "value": "bag", "label": "Bag 👜" }
       ],
       "default": "arrow-right"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_slider_arrows",
+      "label": "Show slider arrows",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "slider_arrows_color",
+      "label": "Slider arrows color",
+      "default": "#000000"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_slider_indicators",
+      "label": "Show slider indicators",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "slider_indicator_color",
+      "label": "Slider indicator color",
+      "default": "#000000"
     },
     {
       "type": "header",
