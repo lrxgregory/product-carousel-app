@@ -12,6 +12,17 @@
   aria-roledescription="carousel"
   aria-label="Product carousel"
 >
+  <!-- Slider controls -->
+  <button
+    type="button"
+    class="group absolute -start-4 top-0 z-30 flex h-full cursor-pointer items-center justify-center px-4"
+    data-carousel-prev
+  >
+    <span class="inline-flex h-10 w-10 items-center justify-center">
+      {% render 'chevron-left' %}
+      <span class="sr-only">Previous</span>
+    </span>
+  </button>
   <!-- Dynamic text -->
   <div
     class="w-full md:w-1/2 md:space-y-5 md:text-left opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out"
@@ -141,6 +152,32 @@
       <div class="bg-gray-300 w-full h-64 flex items-center justify-center text-gray-600">Select products</div>
     {% endif %}
   </div>
+
+  <!-- Slider controls -->
+  <button
+    type="button"
+    class="group absolute -end-4 top-0 z-30 flex h-full cursor-pointer items-center justify-center px-4"
+    data-carousel-next
+  >
+    <span class="inline-flex h-10 w-10 items-center justify-center">
+      {% render 'chevron-right' %}
+      <span class="sr-only">Next</span>
+    </span>
+  </button>
+
+  <!-- Slider indicators -->
+  <div
+    id="slider-indicators-{{ block.id }}"
+    class="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-10 rtl:space-x-reverse"
+  >
+    {% for product in block.settings.products %}
+      <button
+        class="w-3 h-3 rounded-full bg-gray-400 opacity-50 transition-all duration-500 cursor-pointer"
+        aria-label="Slide {{ forloop.index }}"
+        data-index="{{ forloop.index0 }}"
+      ></button>
+    {% endfor %}
+  </div>
 </div>
 
 {% comment %} Unused div for tailwin classes {% endcomment %}
@@ -161,35 +198,36 @@
       carouselContainer: document.getElementById(`carousel-container-${blockId}`),
       carouselWrapper: document.getElementById(`carousel-wrapper-${blockId}`),
       textContainer: document.getElementById(`text-container-${blockId}`),
-      productCarousel: document.getElementById(`product-carousel-${blockId}`)
+      productCarousel: document.getElementById(`product-carousel-${blockId}`),
+      prevButton: document.querySelector(`#carousel-container-${blockId} [data-carousel-prev]`),
+      nextButton: document.querySelector(`#carousel-container-${blockId} [data-carousel-next]`),
+      indicators: document.querySelectorAll(`#slider-indicators-${blockId} button`)
     };
   
     let currentIndex = 0;
     let isAnimating = false;
+    let autoplayInterval;
     const imageChangeDelay = Math.min(5000, Math.max(3000, {{ block.settings.image_change_delay }} || 5000));
-    // Min 3000ms, max 5000ms
     const textChangeDelay = Math.min(300, Math.max(200, {{ block.settings.text_change_delay }} || 200));
-    // Min 200ms, max 300ms
-
     const transitionClass = '{{ block.settings.image_transition_effect }}';
     const textEffectClass = '{{ block.settings.text_transition_effect }}';
     const animationDuration = Math.min(1000, Math.max(300, {{ block.settings.animation_duration }} || 700));
-
+  
     const toggleClasses = (element, classes, add = true) => {
       if (!element) return;
       classes.forEach(cls => element.classList[add ? 'add' : 'remove'](cls));
     };
-
+  
     const showTextAnimation = (isHide = false) => {
       let delay = 0;
       const elementsToAnimate = [
-        elements.textContainer,    // Conteneur principal du texte
-        elements.titleContainer,   // Le h2 entier
-        elements.description,      // Le h3 description
-        elements.price,            // Le span prix
-        elements.buttonContainer   // Le bouton
+        elements.textContainer,
+        elements.titleContainer,
+        elements.description,
+        elements.price,
+        elements.buttonContainer
       ];
-    
+  
       elementsToAnimate.forEach((element) => {
         if (element) {
           setTimeout(() => {
@@ -203,27 +241,78 @@
         }
       });
     };
-
+  
+    const updateIndicators = () => {
+      elements.indicators.forEach((indicator, index) => {
+        if (index === currentIndex) {
+          indicator.classList.remove('opacity-50');
+          indicator.classList.add('opacity-100');
+        } else {
+          indicator.classList.add('opacity-50');
+          indicator.classList.remove('opacity-100');
+        }
+      });
+    };
+  
+    const goToSlide = (index) => {
+      if (isAnimating || index === currentIndex) return;
+      isAnimating = true;
+  
+      // Reset autoplay timer
+      clearInterval(autoplayInterval);
+      startAutoplay();
+  
+      // Hide text
+      showTextAnimation(true);
+  
+      setTimeout(() => {
+        const currentImage = images[currentIndex];
+        const nextImage = images[index];
+  
+        // Prepare next image
+        nextImage.classList.remove('hidden');
+  
+        // Hide current image
+        toggleClasses(currentImage, ['opacity-100'], false);
+        toggleClasses(currentImage, ['opacity-0', transitionClass], true);
+  
+        // Show new image
+        setTimeout(() => {
+          toggleClasses(nextImage, ['opacity-0', transitionClass], false);
+          toggleClasses(nextImage, ['opacity-100'], true);
+  
+          setTimeout(() => {
+            currentImage.classList.add('hidden');
+            currentIndex = index;
+            updateContent(nextImage);
+            updateIndicators();
+            isAnimating = false;
+          }, animationDuration);
+        }, 50);
+      }, animationDuration);
+    };
+  
     const showInitialState = () => {
       toggleClasses(elements.carouselContainer, ['opacity-0'], false);
       toggleClasses(elements.carouselWrapper, ['opacity-0', transitionClass], false);
       setTimeout(() => {
         initializeCarousel();
         showTextAnimation(false);
+        updateIndicators();
       }, animationDuration);
     };
-
+  
     const initializeCarousel = () => {
       const firstImage = images[0];
       if (firstImage) updateContent(firstImage);
-      
+  
       if (firstImage && elements.productCarousel) {
         const setCarouselHeight = () => {
           const height = firstImage.offsetHeight;
           if (height > 0) {
             elements.productCarousel.style.position = 'relative';
             elements.productCarousel.style.height = `${height}px`;
-            
+  
             images.forEach(img => {
               img.style.position = 'absolute';
               img.style.top = '0';
@@ -234,7 +323,7 @@
             setTimeout(setCarouselHeight, 100);
           }
         };
-        
+  
         if (firstImage.complete) {
           setCarouselHeight();
         } else {
@@ -254,57 +343,55 @@
       showTextAnimation(false);
     };
   
-    const updateCarousel = () => {
-      if (isAnimating) return;
-      isAnimating = true;
-    
-      // 1. Hide text
-      showTextAnimation(true);
-    
-      // 2. After text is hidden, start image transition
-      setTimeout(() => {
-        const currentImage = images[currentIndex];
-        const nextIndex = (currentIndex + 1) % images.length;
-        const nextImage = images[nextIndex];
-        
-        // Prepare the next image
-        nextImage.classList.remove('hidden');
-        
-        // Hide the current image
-        toggleClasses(currentImage, ['opacity-100'], false);
-        toggleClasses(currentImage, ['opacity-0', transitionClass], true);
-        
-        // Show the new image after a short delay
-        setTimeout(() => {
-          toggleClasses(nextImage, ['opacity-0', transitionClass], false);
-          toggleClasses(nextImage, ['opacity-100'], true);
-          
-          // Once the image transition is complete
-          setTimeout(() => {
-            currentImage.classList.add('hidden');
-            currentIndex = nextIndex;
-            updateContent(nextImage);
-            isAnimating = false;
-          }, animationDuration);
-        }, 50); // A small delay is necessary for the CSS transition to take effect
-      }, animationDuration);
+    const nextSlide = () => {
+      const nextIndex = (currentIndex + 1) % images.length;
+      goToSlide(nextIndex);
     };
   
+    const prevSlide = () => {
+      const prevIndex = (currentIndex - 1 + images.length) % images.length;
+      goToSlide(prevIndex);
+    };
+  
+    const startAutoplay = () => {
+      autoplayInterval = setInterval(nextSlide, imageChangeDelay);
+    };
+  
+    // Event listeners
+    if (elements.prevButton) {
+      elements.prevButton.addEventListener('click', () => {
+        prevSlide();
+      });
+    }
+  
+    if (elements.nextButton) {
+      elements.nextButton.addEventListener('click', () => {
+        nextSlide();
+      });
+    }
+  
+    elements.indicators.forEach((indicator, index) => {
+      indicator.addEventListener('click', () => {
+        goToSlide(index);
+      });
+    });
+  
+    // Initialize carousel
     setTimeout(showInitialState, 500);
-    setInterval(updateCarousel, imageChangeDelay);
+    startAutoplay();
   }
-
+  
   function preloadImages(images) {
     images.forEach(img => {
       const image = new Image();
       image.src = img.src;
     });
   }
-
+  
   document.addEventListener('DOMContentLoaded', () => {
     const images = document.querySelectorAll('.product-image');
     preloadImages(images);
-
+  
     document.querySelectorAll('[id^="carousel-container-"]').forEach(container => {
       const blockId = container.id.replace('carousel-container-', '');
       initProductCarousel(blockId);
