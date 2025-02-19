@@ -212,7 +212,7 @@
       nextButton: document.querySelector(`#carousel-container-${blockId} [data-carousel-next]`),
       indicators: document.querySelectorAll(`#slider-indicators-${blockId} button`)
     };
-  
+
     let currentIndex = 0;
     let isAnimating = false;
     let autoplayInterval;
@@ -221,12 +221,16 @@
     const transitionClass = '{{ block.settings.image_transition_effect }}';
     const textEffectClass = '{{ block.settings.text_transition_effect }}';
     const animationDuration = Math.min(1000, Math.max(300, {{ block.settings.animation_duration }} || 700));
-  
+
+    // Variables pour le swipe
+    let touchStartX = 0;
+    let touchEndX = 0;
+
     const toggleClasses = (element, classes, add = true) => {
       if (!element) return;
       classes.forEach(cls => element.classList[add ? 'add' : 'remove'](cls));
     };
-  
+
     const showTextAnimation = (isHide = false) => {
       let delay = 0;
       const elementsToAnimate = [
@@ -236,7 +240,7 @@
         elements.price,
         elements.buttonContainer
       ];
-  
+
       elementsToAnimate.forEach((element) => {
         if (element) {
           setTimeout(() => {
@@ -250,7 +254,7 @@
         }
       });
     };
-  
+
     const updateIndicators = () => {
       elements.indicators.forEach((indicator, index) => {
         if (index === currentIndex) {
@@ -262,34 +266,34 @@
         }
       });
     };
-  
+
     const goToSlide = (index) => {
       if (isAnimating || index === currentIndex) return;
       isAnimating = true;
-  
+
       // Reset autoplay timer
       clearInterval(autoplayInterval);
       startAutoplay();
-  
+
       // Hide text
       showTextAnimation(true);
-  
+
       setTimeout(() => {
         const currentImage = images[currentIndex];
         const nextImage = images[index];
-  
+
         // Prepare next image
         nextImage.classList.remove('hidden');
-  
+
         // Hide current image
         toggleClasses(currentImage, ['opacity-100'], false);
         toggleClasses(currentImage, ['opacity-0', transitionClass], true);
-  
+
         // Show new image
         setTimeout(() => {
           toggleClasses(nextImage, ['opacity-0', transitionClass], false);
           toggleClasses(nextImage, ['opacity-100'], true);
-  
+
           setTimeout(() => {
             currentImage.classList.add('hidden');
             currentIndex = index;
@@ -300,7 +304,7 @@
         }, 50);
       }, animationDuration);
     };
-  
+
     const showInitialState = () => {
       toggleClasses(elements.carouselContainer, ['opacity-0'], false);
       toggleClasses(elements.carouselWrapper, ['opacity-0', transitionClass], false);
@@ -310,18 +314,18 @@
         updateIndicators();
       }, animationDuration);
     };
-  
+
     const initializeCarousel = () => {
       const firstImage = images[0];
       if (firstImage) updateContent(firstImage);
-  
+
       if (firstImage && elements.productCarousel) {
         const setCarouselHeight = () => {
           const height = firstImage.offsetHeight;
           if (height > 0) {
             elements.productCarousel.style.position = 'relative';
             elements.productCarousel.style.height = `${height}px`;
-  
+
             images.forEach(img => {
               img.style.position = 'absolute';
               img.style.top = '0';
@@ -332,7 +336,7 @@
             setTimeout(setCarouselHeight, 100);
           }
         };
-  
+
         if (firstImage.complete) {
           setCarouselHeight();
         } else {
@@ -340,7 +344,7 @@
         }
       }
     };
-  
+
     const updateContent = (image) => {
       if (!image) return;
       elements.title1.textContent = image.dataset.title1;
@@ -351,56 +355,78 @@
       if (elements.productButton) elements.productButton.href = image.dataset.producturl;
       showTextAnimation(false);
     };
-  
+
     const nextSlide = () => {
       const nextIndex = (currentIndex + 1) % images.length;
       goToSlide(nextIndex);
     };
-  
+
     const prevSlide = () => {
       const prevIndex = (currentIndex - 1 + images.length) % images.length;
       goToSlide(prevIndex);
     };
-  
+
     const startAutoplay = () => {
       autoplayInterval = setInterval(nextSlide, imageChangeDelay);
     };
-  
-    // Event listeners
+
+    // Event listeners for touch gestures
+    elements.carouselContainer.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    });
+
+    elements.carouselContainer.addEventListener('touchmove', (e) => {
+      touchEndX = e.touches[0].clientX;
+    });
+
+    elements.carouselContainer.addEventListener('touchend', () => {
+      const swipeThreshold = 50; // Minimum distance to consider it a swipe
+      const swipeDistance = touchEndX - touchStartX;
+
+      if (Math.abs(swipeDistance) > swipeThreshold) {
+        if (swipeDistance > 0) {
+          prevSlide();
+        } else {
+          nextSlide();
+        }
+      }
+    });
+
+    // Event listeners for buttons and indicators
     if (elements.prevButton) {
       elements.prevButton.addEventListener('click', () => {
         prevSlide();
       });
     }
-  
+
     if (elements.nextButton) {
       elements.nextButton.addEventListener('click', () => {
         nextSlide();
       });
     }
-  
+
     elements.indicators.forEach((indicator, index) => {
       indicator.addEventListener('click', () => {
         goToSlide(index);
       });
     });
-  
+
     // Initialize carousel
     setTimeout(showInitialState, 500);
     startAutoplay();
   }
-  
+
   function preloadImages(images) {
     images.forEach(img => {
       const image = new Image();
       image.src = img.src;
     });
   }
-  
+
   document.addEventListener('DOMContentLoaded', () => {
     const images = document.querySelectorAll('.product-image');
     preloadImages(images);
-  
+
     document.querySelectorAll('[id^="carousel-container-"]').forEach(container => {
       const blockId = container.id.replace('carousel-container-', '');
       initProductCarousel(blockId);
