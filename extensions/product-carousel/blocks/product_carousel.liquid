@@ -6,13 +6,13 @@
 {{ 'product-carousel.css' | asset_url | stylesheet_tag }}
 
 <div
-  class="flex flex-col-reverse md:flex-row w-full items-center opacity-0 transition-opacity duration-{{ block.settings.animation_duration }} ease-out my-5"
+  class="flex flex-col-reverse md:flex-row w-full items-center opacity-0 transition-opacity duration-{{ block.settings.animation_duration }} ease-out my-12 md:mb-0"
   id="carousel-container-{{ block.id }}"
   role="region"
   aria-roledescription="carousel"
   aria-label="Product carousel"
 >
-  <!-- Slider controls -->
+  <!-- Contrôles du slider -->
   <button
     type="button"
     class="group absolute -start-4 top-0 z-30 flex h-full cursor-pointer items-center justify-center px-4"
@@ -23,9 +23,10 @@
       <span class="sr-only">Previous</span>
     </span>
   </button>
-  <!-- Dynamic text -->
+
+  <!-- Conteneur de texte -->
   <div
-    class="w-full md:w-1/2 md:space-y-5 md:text-left opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out"
+    class="w-full md:w-1/2 h-[300px] md:h-auto px-6 flex flex-col justify-center space-y-4 md:space-y-5 md:text-left opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out"
     id="text-container-{{ block.id }}"
   >
     <h2
@@ -33,15 +34,15 @@
       class="!text-6xl !font-bold uppercase opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out"
       style="color: {{ block.settings.carousel_title_color }};"
     >
-      <span id="title-1-{{ block.id }}" class="block"></span>
-      <span id="title-2-{{ block.id }}" class="block"></span>
-      <span id="title-3-{{ block.id }}" class="block"></span>
+      <span id="title-1-{{ block.id }}" class="block leading-tight"></span>
+      <span id="title-2-{{ block.id }}" class="block leading-tight"></span>
+      <span id="title-3-{{ block.id }}" class="block leading-tight"></span>
     </h2>
 
-    <div class="product-description-price py-4">
+    <div class="product-description-price">
       <h3
         id="product-description-{{ block.id }}"
-        class="!text-3xl mb-0 opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out"
+        class="!text-3xl mb-4 opacity-0 {{ block.settings.text_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out"
         style="color: {{ block.settings.carousel_description_color }};"
       ></h3>
 
@@ -119,22 +120,23 @@
     {% endif %}
   </div>
 
-  <!-- Product carousel -->
+  <!-- Carousel des produits -->
   <div
-    class="w-full md:w-1/2 relative opacity-0 {{ block.settings.image_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out"
+    class="w-full md:w-1/2 h-[300px] md:h-auto relative opacity-0 {{ block.settings.image_transition_effect }} transition-all duration-{{ block.settings.animation_duration }} ease-out"
     id="carousel-wrapper-{{ block.id }}"
   >
     {% if block.settings.products != blank %}
-      <div class="relative">
+      <div class="relative h-full">
         <div
           id="product-carousel-{{ block.id }}"
+          class="h-full flex items-center justify-center"
           aria-live="polite"
         >
           {% for product in block.settings.products %}
             <img
               src="{{ product.featured_image | image_url: width: 580, height: 580 }}"
               alt="{{ product.title }}"
-              class="rounded-3xl w-full product-image-{{ block.id }} transition-all duration-{{ block.settings.animation_duration }} ease-out {% if forloop.first %}opacity-100{% else %}opacity-0 {{ block.settings.image_transition_effect }} hidden{% endif %}"
+              class="rounded-3xl w-full h-full object-contain product-image-{{ block.id }} transition-all duration-{{ block.settings.animation_duration }} ease-out {% if forloop.first %}opacity-100{% else %}opacity-0 {{ block.settings.image_transition_effect }} hidden{% endif %}"
               data-title1="{{ product.metafields.custom.title1 | escape }}"
               data-title2="{{ product.metafields.custom.title2 | escape }}"
               data-title3="{{ product.metafields.custom.title3 | escape }}"
@@ -148,8 +150,6 @@
           {% endfor %}
         </div>
       </div>
-    {% else %}
-      <div class="bg-gray-300 w-full h-64 flex items-center justify-center text-gray-600">Select products</div>
     {% endif %}
   </div>
 
@@ -168,7 +168,7 @@
   <!-- Slider indicators -->
   <div
     id="slider-indicators-{{ block.id }}"
-    class="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-10 rtl:space-x-reverse"
+    class="absolute z-30 flex -translate-x-1/2 left-1/2 space-x-10 rtl:space-x-reverse -bottom-7"
   >
     {% for product in block.settings.products %}
       <button
