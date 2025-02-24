@@ -1,17 +1,6 @@
-import { type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
+import { type ActionFunctionArgs } from "@remix-run/node";
 import { createMetafields } from "app/services/metafieldService.js";
 import shopify from "../shopify.server";
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-    try {
-        const auth = await shopify.authenticate.admin(request);
-        console.log("✅ Authenticated Shopify admin:", auth);
-        return null;
-    } catch (error) {
-        console.error("❌ Shopify authentication error:", error);
-        throw new Response("Unauthorized", { status: 401 });
-    }
-};
 
 export async function action({ request }: ActionFunctionArgs) {
     try {
