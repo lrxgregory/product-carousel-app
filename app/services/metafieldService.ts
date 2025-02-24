@@ -1,13 +1,5 @@
-import { ApiVersion } from "@shopify/shopify-app-remix/server";
+import shopify from "app/shopify.server";
 import metafieldsConfig from "../../extensions/config/metafields.json";
-
-// Typage pour les metafields
-interface Metafield {
-  id: string;
-  namespace: string;
-  key: string;
-  type: { name: string };
-}
 
 interface MetafieldConfig {
   name: string;
@@ -17,22 +9,27 @@ interface MetafieldConfig {
   owner_type: string;
 }
 
-/**
- * Récupère les metafields existants depuis Shopify
- */
-export async function getExistingMetafields(
-  endpoint: string,
-  accessToken: string,
-  ownerType: string = "PRODUCT"
-): Promise<Metafield[]> {
+interface Metafield {
+  id: string;
+  namespace: string;
+  key: string;
+  type: { name: string };
+  name: string;
+}
+
+export async function getExistingMetafields({ request, ownerType }: { request: Request, ownerType: string }) {
+  const { admin } = await shopify.authenticate.admin(request);
+
+  // Filtrer les metafields configurés pour le type de propriétaire spécifié
   const keys = metafieldsConfig.metafields
     .filter((m: MetafieldConfig) => m.owner_type === ownerType.toUpperCase())
     .map((m: MetafieldConfig) => m.key);
 
   const definitions: Metafield[] = [];
 
+  // Récupérer les définitions de metafields existantes pour chaque clé
   for (const key of keys) {
-    const query = `
+    const response = await admin.graphql(`
       {
         metafieldDefinitions(first: 1, ownerType: ${ownerType}, namespace: "custom", key: "${key}") {
           edges {
@@ -45,49 +42,33 @@ export async function getExistingMetafields(
           }
         }
       }
-    `;
+    `);
 
-    try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "X-Shopify-Access-Token": accessToken,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query }),
-      });
+    const parsedResponse = await response.json();
 
-      const result = await response.json();
-      if (result.errors) {
-        console.error(`🚨 GraphQL Error for key "${key}":`, result.errors);
-        continue;
-      }
-
-      const nodes = result.data?.metafieldDefinitions?.edges.map((edge: any) => edge.node) || [];
-      definitions.push(...nodes);
-    } catch (error) {
-      console.error(`❌ Error while retrieving metafield for key "${key}":`, error);
+    // Ajouter les définitions de metafields à la liste
+    if (parsedResponse.data.metafieldDefinitions.edges.length > 0) {
+      definitions.push(parsedResponse.data.metafieldDefinitions.edges[0].node);
     }
   }
 
-  console.log(`🔍 Found metafield definitions for ${ownerType}:`, definitions);
-  return definitions;
+  return {
+    metafieldDefinitions: definitions,
+  };
 }
 
-/**
- * Crée les metafields s'ils n'existent pas
- */
-export async function createMetafieldsIfNeeded(session: any) {
-  const endpoint = `https://${session.shop}/admin/api/${ApiVersion.January25}/graphql.json`;
+export async function createMetafields({ request }: { request: Request }) {
+  const { admin } = await shopify.authenticate.admin(request);
 
   console.log("🔍 Checking existing metafields...");
-  const existingMetafields = await getExistingMetafields(endpoint, session.accessToken);
-  console.log(`Found ${existingMetafields.length} existing metafields`);
+  const existingMetafields = await getExistingMetafields({ request, ownerType: "PRODUCT" });
+  console.log(`Found ${existingMetafields.metafieldDefinitions.length} existing metafields`);
 
   for (const metafield of metafieldsConfig.metafields) {
-    const alreadyExists = existingMetafields.some(
+    const alreadyExists = existingMetafields.metafieldDefinitions.some(
       (m: Metafield) => m.namespace === metafield.namespace && m.key === metafield.key
     );
+
 
     if (alreadyExists) {
       console.log(`Metafield "${metafield.namespace}.${metafield.key}" already exists, skipping.`);
@@ -96,7 +77,7 @@ export async function createMetafieldsIfNeeded(session: any) {
 
     console.log(`📝 Creating new metafield "${metafield.namespace}.${metafield.key}"...`);
 
-    const mutation = `
+    const mutation = await admin.graphql(`
       mutation {
         metafieldDefinitionCreate(definition: {
           name: "${metafield.name}",
@@ -120,99 +101,73 @@ export async function createMetafieldsIfNeeded(session: any) {
           }
         }
       }
-    `;
+    `);
 
-    try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "X-Shopify-Access-Token": session.accessToken,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: mutation }),
-      });
+    const parsedMutation = await mutation.json();
 
-      const result = await response.json();
-      if (result.data?.metafieldDefinitionCreate?.userErrors?.length) {
-        console.error(`❌ Error for ${metafield.namespace}.${metafield.key}:`, result.data.metafieldDefinitionCreate.userErrors);
-      } else {
-        console.log(`✅ Metafield "${metafield.namespace}.${metafield.key}" successfully created!`);
-      }
-    } catch (error) {
-      console.error(`❌ General error for "${metafield.namespace}.${metafield.key}":`, error);
+    if (parsedMutation.data.metafieldDefinitionCreate.userErrors.length > 0) {
+      console.log(`Failed to create metafield "${metafield.namespace}.${metafield.key}": ${parsedMutation.data.metafieldDefinitionCreate.userErrors[0].message}`);
+      continue;
     }
+
+    console.log(`Created metafield "${metafield.namespace}.${metafield.key}"`);
   }
 }
 
-/**
- * Supprime les metafields existants via GraphQL
- */
-export async function deleteMetafields(session: any, deleteValues = false) {
-  const endpoint = `https://${session.shop}/admin/api/${ApiVersion.January25}/graphql.json`;
+export async function deleteMetafields({ request, deleteValues = false }: { request: Request; deleteValues?: boolean }) {
+  const { admin } = await shopify.authenticate.admin(request);
 
-  console.log("🔍 Récupération des metafields existants...");
-  const existingMetafields = await getExistingMetafields(endpoint, session.accessToken);
+  console.log("🔍 Checking existing metafields...");
+  const existingMetafields = await getExistingMetafields({ request, ownerType: "PRODUCT" });
 
-  if (existingMetafields.length === 0) {
-    console.log("✅ Aucun metafield trouvé.");
-    return;
-  }
+  if (existingMetafields.metafieldDefinitions.length === 0) {
+    console.log("✅ No metafields found.");
+  } else {
+    for (const metafield of existingMetafields.metafieldDefinitions) {
+      console.log(`🗑 Deleting metafield "${metafield.namespace}.${metafield.key}" (ID: ${metafield.id})...`);
 
-  for (const metafield of existingMetafields) {
-    console.log(`🗑 Suppression du metafield ${metafield.namespace}.${metafield.key}...`);
-
-    const mutation = `
-      mutation {
-        metafieldDefinitionDelete(id: "${metafield.id}") {
-          deletedDefinitionId
-          userErrors {
-            field
-            message
+      const mutation = await admin.graphql(`
+        mutation {
+          metafieldDefinitionDelete(id: "${metafield.id}") {
+            deletedDefinitionId
+            userErrors {
+              field
+              message
+            }
           }
         }
+      `);
+
+      const parsedMutation = await mutation.json();
+
+      if (parsedMutation.data.metafieldDefinitionDelete.userErrors.length > 0) {
+        console.log(`❌ Failed to delete metafield "${metafield.namespace}.${metafield.key}": ${parsedMutation.data.metafieldDefinitionDelete.userErrors[0].message}`);
+        continue;
       }
-    `;
 
-    try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "X-Shopify-Access-Token": session.accessToken,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: mutation }),
-      });
-
-      const result = await response.json();
-      console.log("📝 Réponse Shopify :", JSON.stringify(result, null, 2));
-
-      if (result.data?.metafieldDefinitionDelete?.userErrors?.length) {
-        console.error("❌ Erreur Shopify :", result.data.metafieldDefinitionDelete.userErrors);
-      } else {
-        console.log(`✅ Metafield "${metafield.namespace}.${metafield.key}" supprimé.`);
-      }
-    } catch (error) {
-      console.error(`❌ Erreur réseau pour "${metafield.namespace}.${metafield.key}":`, error);
+      console.log(`✅ Successfully deleted metafield "${metafield.namespace}.${metafield.key}"`);
     }
   }
 
+  // Si deleteValues est true, on appelle deleteMetafieldsValue pour supprimer les valeurs
   if (deleteValues) {
-    console.log("🗑 Suppression des valeurs des metafields...");
-    await deleteMetafieldValues(session);
+    console.log("🗑 Deleting metafield values...");
+    await deleteMetafieldsValue({ request });
   }
 }
 
-/**
- * Supprime les valeurs des metafields de tous les produits
- */
-async function deleteMetafieldValues(session: any) {
-  const endpoint = `https://${session.shop}/admin/api/${ApiVersion.January25}/graphql.json`;
+
+export async function deleteMetafieldsValue({ request }: { request: Request }) {
+  const { admin } = await shopify.authenticate.admin(request);
+
+  console.log("🔍 Fetching products with metafields...");
 
   let hasNextPage = true;
-  let afterCursor = null;
+  let afterCursor: string | null = null;
 
   while (hasNextPage) {
-    const productQuery = `
+    // ✅ Récupérer les produits et leurs metafields
+    const response = await admin.graphql(`
       {
         products(first: 50${afterCursor ? `, after: "${afterCursor}"` : ""}) {
           edges {
@@ -222,6 +177,8 @@ async function deleteMetafieldValues(session: any) {
                 edges {
                   node {
                     id
+                    namespace
+                    key
                   }
                 }
               }
@@ -233,53 +190,65 @@ async function deleteMetafieldValues(session: any) {
           }
         }
       }
+    `);
+
+    const parsedResponse = await response.json();
+    const products = parsedResponse.data.products.edges || [];
+
+    hasNextPage = parsedResponse.data.products.pageInfo.hasNextPage;
+    afterCursor = hasNextPage ? products.slice(-1)[0].cursor : null;
+
+    // 🔥 **Création de la liste des metafields à supprimer**
+    const metafieldsToDelete = [];
+    for (const product of products) {
+      for (const metafieldEdge of product.node.metafields.edges) {
+        const metafield = metafieldEdge.node;
+        metafieldsToDelete.push({
+          ownerId: product.node.id, // ✅ Format correct `gid://shopify/Product/XXXXXX`
+          namespace: metafield.namespace,
+          key: metafield.key,
+        });
+      }
+    }
+
+    if (metafieldsToDelete.length === 0) {
+      console.log("✅ No metafields values found to delete.");
+      return;
+    }
+
+    console.log(`🗑 Deleting ${metafieldsToDelete.length} metafields values...`);
+
+    // ✅ Utilisation de `metafieldsDelete` pour supprimer plusieurs valeurs d’un coup
+    const deleteMutation = `
+      mutation MetafieldsDelete($metafields: [MetafieldIdentifierInput!]!) {
+        metafieldsDelete(metafields: $metafields) {
+          deletedMetafields {
+            key
+            namespace
+            ownerId
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
     `;
 
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "X-Shopify-Access-Token": session.accessToken,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: productQuery }),
+      const deleteResponse = await admin.graphql(deleteMutation, {
+        variables: { metafields: metafieldsToDelete }, // ✅ Correction ici
       });
 
-      const result = await response.json();
-      const products = result.data?.products?.edges || [];
+      const parsedMutation = await deleteResponse.json();
 
-      for (const product of products) {
-        for (const metafield of product.node.metafields.edges) {
-          const deleteMutation = `
-            mutation {
-              metafieldDelete(input: { id: "${metafield.node.id}" }) {
-                deletedId
-                userErrors {
-                  field
-                  message
-                }
-              }
-            }
-          `;
-
-          await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "X-Shopify-Access-Token": session.accessToken,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ query: deleteMutation }),
-          });
-
-          console.log(`✅ Valeur du metafield ${metafield.node.id} supprimée.`);
-        }
+      if (parsedMutation.data.metafieldsDelete.userErrors.length > 0) {
+        console.log("❌ Shopify Errors:", parsedMutation.data.metafieldsDelete.userErrors);
+      } else {
+        console.log(`✅ Successfully deleted ${metafieldsToDelete.length} metafield values!`);
       }
-
-      hasNextPage = result.data?.products?.pageInfo?.hasNextPage || false;
-      afterCursor = products[products.length - 1]?.cursor || null;
     } catch (error) {
-      console.error("❌ Erreur lors de la suppression des valeurs des metafields:", error);
-      break;
+      console.error("❌ GraphQL error while deleting metafields:", error);
     }
   }
 }

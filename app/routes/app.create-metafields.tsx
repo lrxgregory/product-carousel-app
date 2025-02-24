@@ -1,5 +1,5 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
-import { deleteMetafields } from "app/services/metafieldService.js";
+import { createMetafields } from "app/services/metafieldService.js";
 import shopify from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -14,16 +14,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export async function action({ request }: ActionFunctionArgs) {
-
-    const formData = await request.formData();
-    const deleteValues = formData.get("deleteValues") === "true";
-
     try {
         const auth = await shopify.authenticate.admin(request);
         console.log("✅ Authenticated Shopify admin:", auth.session);
 
         console.log("🛠 Creating metafields...");
-        const response = await deleteMetafields({ request, deleteValues });
+        const response = await createMetafields({ request });
         console.log("✅ Metafields creation response:", response);
 
         return Response.json({ success: true });

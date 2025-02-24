@@ -45,6 +45,12 @@ export default function Index() {
     fetcher.submit({ deleteValues }, { method: "POST", action: "/app/delete-metafields" });
   };
 
+  const createMetafields = () => {
+    setIsDeleting(true);
+    fetcher.submit(null, { method: "POST", action: "/app/create-metafields" });
+  };
+
+
   return (
     <Page>
       <TitleBar title="Gestion des Metafields" />
@@ -60,6 +66,9 @@ export default function Index() {
                   Vous pouvez supprimer uniquement les définitions de metafields ou bien les valeurs associées.
                 </Text>
                 <InlineStack gap="300">
+                  <Button loading={isLoading} onClick={() => createMetafields()}>
+                    Créer les metafields
+                  </Button>
                   <Button loading={isLoading} onClick={() => deleteMetafields(false)}>
                     Supprimer les Metafields (garder valeurs)
                   </Button>
