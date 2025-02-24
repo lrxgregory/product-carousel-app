@@ -1,87 +1,142 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher } from "@remix-run/react";
-import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
+import { TitleBar } from "@shopify/app-bridge-react";
 import {
+  Banner,
   BlockStack,
   Button,
   Card,
+  Divider,
+  Frame,
   InlineStack,
   Layout,
+  Modal,
   Page,
-  Text
+  Spinner,
+  Text,
+  Toast
 } from "@shopify/polaris";
 import { useEffect, useState } from "react";
-import shopify from "../shopify.server";
 
 // Définir un type pour `fetcher.data`
-type DeleteMetafieldsResponse = {
+type MetafieldsResponse = {
   success?: boolean;
-};
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await shopify.authenticate.admin(request);
-  return null;
+  error?: string;
 };
 
 export default function Index() {
-  const fetcher = useFetcher<DeleteMetafieldsResponse>();
-  const shopify = useAppBridge();
+  const fetcher = useFetcher<MetafieldsResponse>();
 
-  const [isDeleting, setIsDeleting] = useState(false);
-  const isLoading = fetcher.state === "loading" || isDeleting;
+  const [toast, setToast] = useState<{ content: string; error?: boolean } | null>(null);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const isLoading = fetcher.state === "loading";
 
   useEffect(() => {
-    if (fetcher.data && "success" in fetcher.data && fetcher.data.success) {
-      shopify.toast.show("Metafields supprimés avec succès !");
-      setIsDeleting(false);
-    } else if (fetcher.data && "error" in fetcher.data) {
-      shopify.toast.show("Erreur lors de la suppression des metafields.");
-      setIsDeleting(false);
+    if (fetcher.data) {
+      if (fetcher.data.success) {
+        setToast({ content: "✅ Action réalisée avec succès !" });
+      } else if (fetcher.data.error) {
+        setToast({ content: "❌ Une erreur est survenue.", error: true });
+      }
     }
-  }, [fetcher.data, shopify]);
+  }, [fetcher.data]);
 
-  const deleteMetafields = (deleteValues: boolean) => {
-    setIsDeleting(true);
-    fetcher.submit({ deleteValues }, { method: "POST", action: "/app/delete-metafields" });
+  const handleSubmit = (action: string, data?: Record<string, any>) => {
+    fetcher.submit(data || null, { method: "POST", action });
   };
-
-  const createMetafields = () => {
-    setIsDeleting(true);
-    fetcher.submit(null, { method: "POST", action: "/app/create-metafields" });
-  };
-
 
   return (
-    <Page>
-      <TitleBar title="Gestion des Metafields" />
-      <BlockStack gap="500">
-        <Layout>
-          <Layout.Section>
-            <Card>
-              <BlockStack gap="500">
-                <Text as="h2" variant="headingMd">
-                  Supprimer les Metafields
-                </Text>
-                <Text as="p" variant="bodyMd">
-                  Vous pouvez supprimer uniquement les définitions de metafields ou bien les valeurs associées.
-                </Text>
-                <InlineStack gap="300">
-                  <Button loading={isLoading} onClick={() => createMetafields()}>
-                    Créer les metafields
+    <Frame>
+      <Page>
+        <TitleBar title="Gestion des Metafields" />
+        <BlockStack gap="500">
+          <Layout>
+            {/* ➕ SECTION CRÉATION */}
+            <Layout.Section>
+              <Card>
+                <BlockStack gap="500">
+                  <Text as="h2" variant="headingMd">
+                    ➕ Créer des Metafields
+                  </Text>
+                  <Text as="p" variant="bodyMd">
+                    Ajouter de nouveaux metafields à votre boutique.
+                  </Text>
+                  <Button loading={isLoading} primary onClick={() => handleSubmit("/app/create-metafields")}>
+                    ➕ Créer les metafields
                   </Button>
-                  <Button loading={isLoading} onClick={() => deleteMetafields(false)}>
-                    Supprimer les Metafields (garder valeurs)
-                  </Button>
-                  <Button loading={isLoading} onClick={() => deleteMetafields(true)} tone="critical">
-                    Supprimer Metafields + Valeurs
-                  </Button>
+                </BlockStack>
+              </Card>
+            </Layout.Section>
 
-                </InlineStack>
-              </BlockStack>
-            </Card>
-          </Layout.Section>
-        </Layout>
-      </BlockStack>
-    </Page>
+            {/* 🔥 DIVISEUR VISUEL */}
+            <Layout.Section>
+              <Divider />
+            </Layout.Section>
+
+            {/* 🗑️ SECTION SUPPRESSION */}
+            <Layout.Section>
+              <Card>
+                <BlockStack gap="500">
+                  <Text as="h2" variant="headingMd">
+                    🗑️ Supprimer des Metafields
+                  </Text>
+                  <Text as="p" variant="bodyMd">
+                    Vous pouvez supprimer uniquement les définitions des metafields ou supprimer totalement leurs valeurs.
+                  </Text>
+
+                  <InlineStack gap="300">
+                    <Button loading={isLoading} onClick={() => handleSubmit("/app/delete-metafields", { deleteValues: false })}>
+                      🗑️ Supprimer les définitions
+                    </Button>
+                    <Button loading={isLoading} destructive onClick={() => setIsDeletingAll(true)}>
+                      ⚠️ Supprimer TOUT (définitions + valeurs)
+                    </Button>
+                  </InlineStack>
+                </BlockStack>
+              </Card>
+            </Layout.Section>
+          </Layout>
+        </BlockStack>
+
+        {/* ✅ Toast Feedback */}
+        {toast && <Toast content={toast.content} error={toast.error} onDismiss={() => setToast(null)} />}
+
+        {/* 🔥 Confirmation avant suppression totale */}
+        {isDeletingAll && (
+          <Modal
+            open
+            onClose={() => setIsDeletingAll(false)}
+            title="Confirmer la suppression"
+            primaryAction={{
+              content: "Supprimer tout",
+              destructive: true,
+              onAction: () => {
+                setIsDeletingAll(false);
+                handleSubmit("/app/delete-metafields", { deleteValues: true });
+              },
+            }}
+            secondaryActions={[
+              {
+                content: "Annuler",
+                onAction: () => setIsDeletingAll(false),
+              },
+            ]}
+          >
+            <Modal.Section>
+              <Text as="p">
+                Cette action est <strong>irréversible</strong>. Tous les metafields et leurs valeurs seront supprimés définitivement.
+              </Text>
+            </Modal.Section>
+          </Modal>
+        )}
+
+        {/* ✅ Indicateur de chargement global */}
+        {isLoading && (
+          <Banner title="Action en cours..." status="info">
+            <Spinner size="small" />
+            <Text as="p">Veuillez patienter pendant le traitement.</Text>
+          </Banner>
+        )}
+      </Page>
+    </Frame>
   );
 }
