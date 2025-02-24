@@ -16,8 +16,7 @@ import {
   Toast
 } from "@shopify/polaris";
 import {
-  DeleteIcon,
-  PlusCircleIcon
+  DeleteIcon, PlusIcon
 } from '@shopify/polaris-icons';
 import { useEffect, useState } from "react";
 
@@ -68,7 +67,7 @@ export default function Index() {
                     <Button
                       loading={isLoading}
                       variant="primary"
-                      icon={PlusCircleIcon}
+                      icon={PlusIcon}
                       onClick={() => handleSubmit("/app/create-metafields")}
                     >
                       Create Metafields
