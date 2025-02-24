@@ -20,14 +20,14 @@ interface Metafield {
 export async function getExistingMetafields({ request, ownerType }: { request: Request, ownerType: string }) {
   const { admin } = await shopify.authenticate.admin(request);
 
-  // Filtrer les metafields configurés pour le type de propriétaire spécifié
+  // Filter metafields configurations for the specified owner type
   const keys = metafieldsConfig.metafields
     .filter((m: MetafieldConfig) => m.owner_type === ownerType.toUpperCase())
     .map((m: MetafieldConfig) => m.key);
 
   const definitions: Metafield[] = [];
 
-  // Récupérer les définitions de metafields existantes pour chaque clé
+  // Get metafield definitions for each key
   for (const key of keys) {
     const response = await admin.graphql(`
       {
@@ -46,7 +46,7 @@ export async function getExistingMetafields({ request, ownerType }: { request: R
 
     const parsedResponse = await response.json();
 
-    // Ajouter les définitions de metafields à la liste
+    // Add metafield definition to the list
     if (parsedResponse.data.metafieldDefinitions.edges.length > 0) {
       definitions.push(parsedResponse.data.metafieldDefinitions.edges[0].node);
     }
@@ -149,7 +149,6 @@ export async function deleteMetafields({ request, deleteValues = false }: { requ
     }
   }
 
-  // Si deleteValues est true, on appelle deleteMetafieldsValue pour supprimer les valeurs
   if (deleteValues) {
     console.log("🗑 Deleting metafield values...");
     await deleteMetafieldsValue({ request });
@@ -166,8 +165,8 @@ export async function deleteMetafieldsValue({ request }: { request: Request }) {
   let afterCursor: string | null = null;
 
   while (hasNextPage) {
-    // ✅ Récupérer les produits et leurs metafields
-    const response = await admin.graphql(`
+    // Get products with metafields
+    const response: Response = await admin.graphql(`
       {
         products(first: 50${afterCursor ? `, after: "${afterCursor}"` : ""}) {
           edges {
@@ -192,19 +191,45 @@ export async function deleteMetafieldsValue({ request }: { request: Request }) {
       }
     `);
 
-    const parsedResponse = await response.json();
+    // 🔹 Define Shopify response type
+    type ShopifyGraphQLResponse = {
+      data: {
+        products: {
+          edges: {
+            node: {
+              id: string;
+              metafields: {
+                edges: {
+                  node: {
+                    id: string;
+                    namespace: string;
+                    key: string;
+                  };
+                }[];
+              };
+            };
+            cursor: string;
+          }[];
+          pageInfo: {
+            hasNextPage: boolean;
+          };
+        };
+      };
+    };
+
+    const parsedResponse: ShopifyGraphQLResponse = await response.json();
     const products = parsedResponse.data.products.edges || [];
 
     hasNextPage = parsedResponse.data.products.pageInfo.hasNextPage;
     afterCursor = hasNextPage ? products.slice(-1)[0].cursor : null;
 
-    // 🔥 **Création de la liste des metafields à supprimer**
-    const metafieldsToDelete = [];
+    // Creation of the metafields list to delete
+    const metafieldsToDelete: { ownerId: string; namespace: string; key: string }[] = [];
     for (const product of products) {
       for (const metafieldEdge of product.node.metafields.edges) {
         const metafield = metafieldEdge.node;
         metafieldsToDelete.push({
-          ownerId: product.node.id, // ✅ Format correct `gid://shopify/Product/XXXXXX`
+          ownerId: product.node.id,
           namespace: metafield.namespace,
           key: metafield.key,
         });
@@ -218,7 +243,6 @@ export async function deleteMetafieldsValue({ request }: { request: Request }) {
 
     console.log(`🗑 Deleting ${metafieldsToDelete.length} metafields values...`);
 
-    // ✅ Utilisation de `metafieldsDelete` pour supprimer plusieurs valeurs d’un coup
     const deleteMutation = `
       mutation MetafieldsDelete($metafields: [MetafieldIdentifierInput!]!) {
         metafieldsDelete(metafields: $metafields) {
@@ -236,11 +260,20 @@ export async function deleteMetafieldsValue({ request }: { request: Request }) {
     `;
 
     try {
-      const deleteResponse = await admin.graphql(deleteMutation, {
-        variables: { metafields: metafieldsToDelete }, // ✅ Correction ici
+      const deleteResponse: Response = await admin.graphql(deleteMutation, {
+        variables: { metafields: metafieldsToDelete },
       });
 
-      const parsedMutation = await deleteResponse.json();
+      type ShopifyMutationResponse = {
+        data: {
+          metafieldsDelete: {
+            deletedMetafields: { key: string; namespace: string; ownerId: string }[];
+            userErrors: { field: string; message: string }[];
+          };
+        };
+      };
+
+      const parsedMutation: ShopifyMutationResponse = await deleteResponse.json();
 
       if (parsedMutation.data.metafieldsDelete.userErrors.length > 0) {
         console.log("❌ Shopify Errors:", parsedMutation.data.metafieldsDelete.userErrors);

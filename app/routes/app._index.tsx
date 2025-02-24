@@ -15,9 +15,15 @@ import {
   Text,
   Toast
 } from "@shopify/polaris";
+import {
+  DeleteIcon,
+  PlusCircleIcon
+} from '@shopify/polaris-icons';
 import { useEffect, useState } from "react";
 
-// Définir un type pour `fetcher.data`
+
+
+// Define a type for `fetcher.data`
 type MetafieldsResponse = {
   success?: boolean;
   error?: string;
@@ -31,12 +37,10 @@ export default function Index() {
   const isLoading = fetcher.state === "loading";
 
   useEffect(() => {
-    if (fetcher.data) {
-      if (fetcher.data.success) {
-        setToast({ content: "✅ Action réalisée avec succès !" });
-      } else if (fetcher.data.error) {
-        setToast({ content: "❌ Une erreur est survenue.", error: true });
-      }
+    if (fetcher.data?.success) {
+      setTimeout(() => setToast({ content: "✅ Action completed successfully!" }), 200);
+    } else if (fetcher.data?.error) {
+      setTimeout(() => setToast({ content: "❌ An error occurred.", error: true }), 200);
     }
   }, [fetcher.data]);
 
@@ -47,48 +51,61 @@ export default function Index() {
   return (
     <Frame>
       <Page>
-        <TitleBar title="Gestion des Metafields" />
+        <TitleBar title="Metafields Management" />
         <BlockStack gap="500">
           <Layout>
-            {/* ➕ SECTION CRÉATION */}
+            {/* ➕ CREATE SECTION */}
             <Layout.Section>
               <Card>
                 <BlockStack gap="500">
-                  <Text as="h2" variant="headingMd">
-                    ➕ Créer des Metafields
+                  <Text as="h2" variant="headingMd" fontWeight="bold">
+                    Add metafields
                   </Text>
                   <Text as="p" variant="bodyMd">
-                    Ajouter de nouveaux metafields à votre boutique.
+                    The metafields should be created automatically when the app is installed, but if an issue occured or you removed them, you can create them again.
                   </Text>
-                  <Button loading={isLoading} primary onClick={() => handleSubmit("/app/create-metafields")}>
-                    ➕ Créer les metafields
-                  </Button>
+                  <InlineStack>
+                    <Button
+                      loading={isLoading}
+                      variant="primary"
+                      icon={PlusCircleIcon}
+                      onClick={() => handleSubmit("/app/create-metafields")}
+                    >
+                      Create Metafields
+                    </Button>
+                  </InlineStack>
                 </BlockStack>
               </Card>
             </Layout.Section>
 
-            {/* 🔥 DIVISEUR VISUEL */}
+            {/* 🔥 VISUAL DIVIDER */}
             <Layout.Section>
               <Divider />
             </Layout.Section>
 
-            {/* 🗑️ SECTION SUPPRESSION */}
+            {/* 🗑️ DELETE SECTION */}
             <Layout.Section>
               <Card>
                 <BlockStack gap="500">
-                  <Text as="h2" variant="headingMd">
-                    🗑️ Supprimer des Metafields
+                  <Text as="h2" variant="headingMd" fontWeight="bold">
+                    Delete Metafields
                   </Text>
                   <Text as="p" variant="bodyMd">
-                    Vous pouvez supprimer uniquement les définitions des metafields ou supprimer totalement leurs valeurs.
+                    You can delete only metafield definitions or completely remove their values.
                   </Text>
 
-                  <InlineStack gap="300">
-                    <Button loading={isLoading} onClick={() => handleSubmit("/app/delete-metafields", { deleteValues: false })}>
-                      🗑️ Supprimer les définitions
+                  <InlineStack gap="200">
+                    <Button loading={isLoading} icon={DeleteIcon} tone="critical" onClick={() => handleSubmit("/app/delete-metafields", { deleteValues: false })}>
+                      Delete Definitions
                     </Button>
-                    <Button loading={isLoading} destructive onClick={() => setIsDeletingAll(true)}>
-                      ⚠️ Supprimer TOUT (définitions + valeurs)
+                    <Button
+                      loading={isLoading}
+                      icon={DeleteIcon}
+                      tone="critical"
+                      variant="primary"
+                      onClick={() => setIsDeletingAll(true)}
+                    >
+                      Delete All
                     </Button>
                   </InlineStack>
                 </BlockStack>
@@ -100,40 +117,35 @@ export default function Index() {
         {/* ✅ Toast Feedback */}
         {toast && <Toast content={toast.content} error={toast.error} onDismiss={() => setToast(null)} />}
 
-        {/* 🔥 Confirmation avant suppression totale */}
+        {/* 🔥 Confirmation before total deletion */}
         {isDeletingAll && (
           <Modal
             open
             onClose={() => setIsDeletingAll(false)}
-            title="Confirmer la suppression"
+            title="Confirm Deletion"
             primaryAction={{
-              content: "Supprimer tout",
+              content: "Delete All",
               destructive: true,
               onAction: () => {
                 setIsDeletingAll(false);
                 handleSubmit("/app/delete-metafields", { deleteValues: true });
               },
             }}
-            secondaryActions={[
-              {
-                content: "Annuler",
-                onAction: () => setIsDeletingAll(false),
-              },
-            ]}
+            secondaryActions={[{ content: "Cancel", onAction: () => setIsDeletingAll(false) }]}
           >
             <Modal.Section>
               <Text as="p">
-                Cette action est <strong>irréversible</strong>. Tous les metafields et leurs valeurs seront supprimés définitivement.
+                This action is <strong>irreversible</strong>. All metafields and their values will be permanently deleted.
               </Text>
             </Modal.Section>
           </Modal>
         )}
 
-        {/* ✅ Indicateur de chargement global */}
+        {/* ✅ Global loading indicator */}
         {isLoading && (
-          <Banner title="Action en cours..." status="info">
+          <Banner title="Action in progress..." tone="info">
             <Spinner size="small" />
-            <Text as="p">Veuillez patienter pendant le traitement.</Text>
+            Please wait while processing.
           </Banner>
         )}
       </Page>
