@@ -1,17 +1,14 @@
 import { useFetcher } from "@remix-run/react";
 import { TitleBar } from "@shopify/app-bridge-react";
 import {
-  Banner,
   BlockStack,
   Button,
   Card,
-  Divider,
   Frame,
   InlineStack,
   Layout,
   Modal,
   Page,
-  Spinner,
   Text,
   Toast
 } from "@shopify/polaris";
@@ -33,17 +30,19 @@ export default function Index() {
 
   const [toast, setToast] = useState<{ content: string; error?: boolean } | null>(null);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
   const isLoading = fetcher.state === "loading";
 
   useEffect(() => {
     if (fetcher.data?.success) {
-      setTimeout(() => setToast({ content: "✅ Action completed successfully!" }), 200);
+      setToast({ content: `✅ ${actionMessage} successfully!` });
     } else if (fetcher.data?.error) {
-      setTimeout(() => setToast({ content: "❌ An error occurred.", error: true }), 200);
+      setToast({ content: "❌ An error occurred.", error: true });
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, actionMessage]);
 
-  const handleSubmit = (action: string, data?: Record<string, any>) => {
+  const handleSubmit = (action: string, message: string, data?: Record<string, any>) => {
+    setActionMessage(message);
     fetcher.submit(data || null, { method: "POST", action });
   };
 
@@ -61,25 +60,20 @@ export default function Index() {
                     Add metafields
                   </Text>
                   <Text as="p" variant="bodyMd">
-                    The metafields should be created automatically when the app is installed, but if an issue occured or you removed them, you can create them again.
+                    The metafields should be created automatically when the app is installed, but if an issue occurred or you removed them, you can create them again.
                   </Text>
                   <InlineStack>
                     <Button
                       loading={isLoading}
                       variant="primary"
                       icon={PlusIcon}
-                      onClick={() => handleSubmit("/app/create-metafields")}
+                      onClick={() => handleSubmit("/app/create-metafields", "Metafields created")}
                     >
                       Create Metafields
                     </Button>
                   </InlineStack>
                 </BlockStack>
               </Card>
-            </Layout.Section>
-
-            {/* 🔥 VISUAL DIVIDER */}
-            <Layout.Section>
-              <Divider />
             </Layout.Section>
 
             {/* 🗑️ DELETE SECTION */}
@@ -94,7 +88,12 @@ export default function Index() {
                   </Text>
 
                   <InlineStack gap="200">
-                    <Button loading={isLoading} icon={DeleteIcon} tone="critical" onClick={() => handleSubmit("/app/delete-metafields", { deleteValues: false })}>
+                    <Button
+                      loading={isLoading}
+                      icon={DeleteIcon}
+                      tone="critical"
+                      onClick={() => handleSubmit("/app/delete-metafields", "Metafield definitions deleted", { deleteValues: false })}
+                    >
                       Delete Definitions
                     </Button>
                     <Button
@@ -102,7 +101,10 @@ export default function Index() {
                       icon={DeleteIcon}
                       tone="critical"
                       variant="primary"
-                      onClick={() => setIsDeletingAll(true)}
+                      onClick={() => {
+                        setIsDeletingAll(true);
+                        setActionMessage("All metafields deleted");
+                      }}
                     >
                       Delete All
                     </Button>
@@ -127,7 +129,7 @@ export default function Index() {
               destructive: true,
               onAction: () => {
                 setIsDeletingAll(false);
-                handleSubmit("/app/delete-metafields", { deleteValues: true });
+                handleSubmit("/app/delete-metafields", "All metafields deleted", { deleteValues: true });
               },
             }}
             secondaryActions={[{ content: "Cancel", onAction: () => setIsDeletingAll(false) }]}
@@ -138,14 +140,6 @@ export default function Index() {
               </Text>
             </Modal.Section>
           </Modal>
-        )}
-
-        {/* ✅ Global loading indicator */}
-        {isLoading && (
-          <Banner title="Action in progress..." tone="info">
-            <Spinner size="small" />
-            Please wait while processing.
-          </Banner>
         )}
       </Page>
     </Frame>
